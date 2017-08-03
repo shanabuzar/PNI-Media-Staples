@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Created:cb85b80c-f585-40ff-8bfc-12ff4d0e34a9-->
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" 
+  xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"           
+  xsi:type="TaskPaneApp">
+  <Id>fcfe482c-9d5a-4ea1-81e4-668829ecdb40</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Staples Copy &amp; Print</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="Print to Staples" />
+  <Description DefaultValue="Send your documents directly to a nearby Staples location for fast, full service printing! Make More Happen."/>
+  <IconUrl DefaultValue="https://localhost:44306/app_icon.png"></IconUrl>
+  <SupportUrl DefaultValue="https://localhost:44306/Office365Help.html"></SupportUrl>
+  <AppDomains>
+    <AppDomain>https://localhost:44306/</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Presentation" />
+    <Host Name="Document" />
+  </Hosts>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://localhost:44306/" />
+  </DefaultSettings>
+  <Permissions>ReadAllDocument</Permissions>
+  <!--BeginAddinCommandsMode integration-->
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <!-- Optional, override the description of the Add-in -->
+    <Description resid="residToolTip" />
+    <!--Required, hosts node. Each host can have a different set of commands -->
+    <Hosts>
+      <!--Specific host. Workbook=Excel, Document=Word, Presentation=PowerPoint -->
+      <Host xsi:type="Document">
+        <!-- Form factor. Currenly only DesktopFormFactor is supported. We will add TabletFormFactor and PhoneFormFactor in the future-->
+        <DesktopFormFactor>
+          <!--PrimaryCommandSurface==Main Office Ribbon-->
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+
+            <!--Use OfficeTab to extend an existing Tab. Use CustomTab to create a new tab -->
+            <!-- Documentation includes all the IDs currently tested to work -->
+            <OfficeTab id="TabHome">
+              <!--Group. Ensure you provide a unique id. Recommendation for any IDs is to namespace using your companyname-->
+              <Group id="DocumentTabHomeStaplesGroup1">
+                <!--Label for your group. resid must point to a ShortString resource -->
+                <Label resid="groupLabel" />
+                <!--Icons. Required sizes 16,31,80, optional 20, 24, 40, 48, 64. Strongly recommended to provide all sizes for great UX -->
+                <!--Use PNG icons and remember that all URLs on the resources section must use HTTPS -->
+                <Icon>
+                  <bt:Image size="16" resid="icon1_16x16" />
+                  <bt:Image size="32" resid="icon1_32x32" />
+                  <bt:Image size="80" resid="icon1_80x80" />
+                </Icon>
+                <!--Control. It can be of type "Button" or "Menu" -->
+                <Control xsi:type="Button" id="DocumentTabHomeStaplesButton1">
+                  <!--Label for your button. resid must point to a ShortString resource -->
+                  <Label resid="buttonLabel" />
+                  <Supertip>
+                    <!--ToolTip title. resid must point to a ShortString resource -->
+                    <Title resid="residLabel" />
+                    <!--ToolTip description. resid must point to a LongString resource -->
+                    <Description resid="residToolTip" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="icon1_16x16" />
+                    <bt:Image size="32" resid="icon1_32x32" />
+                    <bt:Image size="80" resid="icon1_80x80" />
+                  </Icon>
+                  <!--This is what happens when the command is triggered (E.g. click on the Ribbon). Supported actions are ExecuteFuncion or ShowTaskpane-->
+                  <Action xsi:type="ShowTaskpane">
+                    <!--Provide a url resource id for the location that will be displayed on the taskpane -->
+                    <SourceLocation resid="taskPaneUrl" />
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+            <CustomTab id="DocumentTabStaples">
+              <!--Group. Ensure you provide a unique id. Recommendation for any IDs is to namespace using your companyname-->
+              <Group id="DocumentTabStaplesGroup1">
+                <!--Label for your group. resid must point to a ShortString resource -->
+                <Label resid="groupLabel" />
+                <!--Icons. Required sizes 16,31,80, optional 20, 24, 40, 48, 64. Strongly recommended to provide all sizes for great UX -->
+                <!--Use PNG icons and remember that all URLs on the resources section must use HTTPS -->
+                <Icon>
+                  <bt:Image size="16" resid="icon1_16x16" />
+                  <bt:Image size="32" resid="icon1_32x32" />
+                  <bt:Image size="80" resid="icon1_80x80" />
+                </Icon>
+                <!--Control. It can be of type "Button" or "Menu" -->
+                <Control xsi:type="Button" id="DocumentTabStaplesButton1">
+                  <!--Label for your button. resid must point to a ShortString resource -->
+                  <Label resid="buttonLabel" />
+                  <Supertip>
+                    <!--ToolTip title. resid must point to a ShortString resource -->
+                    <Title resid="residLabel" />
+                    <!--ToolTip description. resid must point to a LongString resource -->
+                    <Description resid="residToolTip" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="icon1_16x16" />
+                    <bt:Image size="32" resid="icon1_32x32" />
+                    <bt:Image size="80" resid="icon1_80x80" />
+                  </Icon>
+                  <!--This is what happens when the command is triggered (E.g. click on the Ribbon). Supported actions are ExecuteFuncion or ShowTaskpane-->
+                  <Action xsi:type="ShowTaskpane">
+                    <!--Provide a url resource id for the location that will be displayed on the taskpane -->
+                    <SourceLocation resid="taskPaneUrl" />
+                  </Action>
+                </Control>
+              </Group>
+              <Label resid="tabLabel" />
+            </CustomTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+      <Host xsi:type="Presentation">
+        <!-- Form factor. Currenly only DesktopFormFactor is supported. We will add TabletFormFactor and PhoneFormFactor in the future-->
+        <DesktopFormFactor>
+          <!--PrimaryCommandSurface==Main Office Ribbon-->
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+
+            <!--Use OfficeTab to extend an existing Tab. Use CustomTab to create a new tab -->
+            <!-- Documentation includes all the IDs currently tested to work -->
+            <OfficeTab id="TabHome">
+              <!--Group. Ensure you provide a unique id. Recommendation for any IDs is to namespace using your companyname-->
+              <Group id="PresentationTabHomeStaplesGroup1">
+                <!--Label for your group. resid must point to a ShortString resource -->
+                <Label resid="groupLabel" />
+                <!--Icons. Required sizes 16,31,80, optional 20, 24, 40, 48, 64. Strongly recommended to provide all sizes for great UX -->
+                <!--Use PNG icons and remember that all URLs on the resources section must use HTTPS -->
+                <Icon>
+                  <bt:Image size="16" resid="icon1_16x16" />
+                  <bt:Image size="32" resid="icon1_32x32" />
+                  <bt:Image size="80" resid="icon1_80x80" />
+                </Icon>
+                <!--Control. It can be of type "Button" or "Menu" -->
+                <Control xsi:type="Button" id="PresentationTabHomeStaplesButton1">
+                  <!--Label for your button. resid must point to a ShortString resource -->
+                  <Label resid="buttonLabel" />
+                  <Supertip>
+                    <!--ToolTip title. resid must point to a ShortString resource -->
+                    <Title resid="residLabel" />
+                    <!--ToolTip description. resid must point to a LongString resource -->
+                    <Description resid="residToolTip" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="icon1_16x16" />
+                    <bt:Image size="32" resid="icon1_32x32" />
+                    <bt:Image size="80" resid="icon1_80x80" />
+                  </Icon>
+                  <!--This is what happens when the command is triggered (E.g. click on the Ribbon). Supported actions are ExecuteFuncion or ShowTaskpane-->
+                  <Action xsi:type="ShowTaskpane">
+                    <!--Provide a url resource id for the location that will be displayed on the taskpane -->
+                    <SourceLocation resid="taskPaneUrl" />
+                  </Action>
+                </Control>
+              </Group>
+            </OfficeTab>
+            <CustomTab id="PresentationTabStaples">
+              <!--Group. Ensure you provide a unique id. Recommendation for any IDs is to namespace using your companyname-->
+              <Group id="PresentationTabStaplesGroup1">
+                <!--Label for your group. resid must point to a ShortString resource -->
+                <Label resid="groupLabel" />
+                <!--Icons. Required sizes 16,31,80, optional 20, 24, 40, 48, 64. Strongly recommended to provide all sizes for great UX -->
+                <!--Use PNG icons and remember that all URLs on the resources section must use HTTPS -->
+                <Icon>
+                  <bt:Image size="16" resid="icon1_16x16" />
+                  <bt:Image size="32" resid="icon1_32x32" />
+                  <bt:Image size="80" resid="icon1_80x80" />
+                </Icon>
+                <!--Control. It can be of type "Button" or "Menu" -->
+                <Control xsi:type="Button" id="PresentationTabStaplesButton1">
+                  <!--Label for your button. resid must point to a ShortString resource -->
+                  <Label resid="buttonLabel" />
+                  <Supertip>
+                    <!--ToolTip title. resid must point to a ShortString resource -->
+                    <Title resid="residLabel" />
+                    <!--ToolTip description. resid must point to a LongString resource -->
+                    <Description resid="residToolTip" />
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="icon1_16x16" />
+                    <bt:Image size="32" resid="icon1_32x32" />
+                    <bt:Image size="80" resid="icon1_80x80" />
+                  </Icon>
+                  <!--This is what happens when the command is triggered (E.g. click on the Ribbon). Supported actions are ExecuteFuncion or ShowTaskpane-->
+                  <Action xsi:type="ShowTaskpane">
+                    <!--Provide a url resource id for the location that will be displayed on the taskpane -->
+                    <SourceLocation resid="taskPaneUrl" />
+                  </Action>
+                </Control>
+              </Group>
+              <Label resid="tabLabel" />
+            </CustomTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="icon1_16x16" DefaultValue="https://localhost:44306/app_icon16.png">
+        </bt:Image>
+        <bt:Image id="icon1_32x32" DefaultValue="https://localhost:44306/app_icon32.png">
+        </bt:Image>
+        <bt:Image id="icon1_80x80" DefaultValue="https://localhost:44306/app_icon80.png">
+        </bt:Image>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="taskPaneUrl" DefaultValue="https://localhost:44306/">
+        </bt:Url>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="tabLabel" DefaultValue="Staples">
+        </bt:String>
+        <bt:String id="residLabel" DefaultValue="Print to Staples">
+        </bt:String>
+        <bt:String id="buttonLabel" DefaultValue="Print to Staples">
+        </bt:String>
+        <bt:String id="groupLabel" DefaultValue="Print to Staples">
+        </bt:String>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="residToolTip" DefaultValue="Print to Staples">
+        </bt:String>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>

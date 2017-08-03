@@ -1,0 +1,53 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Office365App", "Office365App\Office365App.csproj", "{7C53AF67-5E50-4F34-8942-862E7CB39398}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Office365AppWeb", "Office365AppWeb\Office365AppWeb.csproj", "{1EAAA913-53DD-49AB-A01B-35328872BFDD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{256DA920-FF8E-4DCC-BCBC-043C6F413743}"
+	ProjectSection(SolutionItems) = preProject
+		processtemplate.ps1 = processtemplate.ps1
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+		Test-EBT|Any CPU = Test-EBT|Any CPU
+		Test-EBT-Vorlon|Any CPU = Test-EBT-Vorlon|Any CPU
+		Test-PNI|Any CPU = Test-PNI|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7C53AF67-5E50-4F34-8942-862E7CB39398}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C53AF67-5E50-4F34-8942-862E7CB39398}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C53AF67-5E50-4F34-8942-862E7CB39398}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{7C53AF67-5E50-4F34-8942-862E7CB39398}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C53AF67-5E50-4F34-8942-862E7CB39398}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C53AF67-5E50-4F34-8942-862E7CB39398}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{7C53AF67-5E50-4F34-8942-862E7CB39398}.Test-EBT|Any CPU.ActiveCfg = Test-EBT|Any CPU
+		{7C53AF67-5E50-4F34-8942-862E7CB39398}.Test-EBT|Any CPU.Build.0 = Test-EBT|Any CPU
+		{7C53AF67-5E50-4F34-8942-862E7CB39398}.Test-EBT|Any CPU.Deploy.0 = Test-EBT|Any CPU
+		{7C53AF67-5E50-4F34-8942-862E7CB39398}.Test-EBT-Vorlon|Any CPU.ActiveCfg = Test-EBT-Vorlon|Any CPU
+		{7C53AF67-5E50-4F34-8942-862E7CB39398}.Test-EBT-Vorlon|Any CPU.Build.0 = Test-EBT-Vorlon|Any CPU
+		{7C53AF67-5E50-4F34-8942-862E7CB39398}.Test-EBT-Vorlon|Any CPU.Deploy.0 = Test-EBT-Vorlon|Any CPU
+		{7C53AF67-5E50-4F34-8942-862E7CB39398}.Test-PNI|Any CPU.ActiveCfg = Test-PNI|Any CPU
+		{7C53AF67-5E50-4F34-8942-862E7CB39398}.Test-PNI|Any CPU.Build.0 = Test-PNI|Any CPU
+		{7C53AF67-5E50-4F34-8942-862E7CB39398}.Test-PNI|Any CPU.Deploy.0 = Test-PNI|Any CPU
+		{1EAAA913-53DD-49AB-A01B-35328872BFDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EAAA913-53DD-49AB-A01B-35328872BFDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1EAAA913-53DD-49AB-A01B-35328872BFDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1EAAA913-53DD-49AB-A01B-35328872BFDD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1EAAA913-53DD-49AB-A01B-35328872BFDD}.Test-EBT|Any CPU.ActiveCfg = Test-EBT|Any CPU
+		{1EAAA913-53DD-49AB-A01B-35328872BFDD}.Test-EBT|Any CPU.Build.0 = Test-EBT|Any CPU
+		{1EAAA913-53DD-49AB-A01B-35328872BFDD}.Test-EBT-Vorlon|Any CPU.ActiveCfg = Test-EBT-Vorlon|Any CPU
+		{1EAAA913-53DD-49AB-A01B-35328872BFDD}.Test-EBT-Vorlon|Any CPU.Build.0 = Test-EBT-Vorlon|Any CPU
+		{1EAAA913-53DD-49AB-A01B-35328872BFDD}.Test-PNI|Any CPU.ActiveCfg = Test-PNI|Any CPU
+		{1EAAA913-53DD-49AB-A01B-35328872BFDD}.Test-PNI|Any CPU.Build.0 = Test-PNI|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

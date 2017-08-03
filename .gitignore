@@ -1,0 +1,15 @@
+.vs/
+.bin/
+.nuget/
+node_modules/
+Release/
+Debug/
+*.docx
+*.user
+orig/
+ico/
+Ionic/
+bin/
+obj/
+packages/
+pkgobj/

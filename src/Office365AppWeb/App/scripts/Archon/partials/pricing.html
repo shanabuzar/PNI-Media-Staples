@@ -1,0 +1,11 @@
+﻿<div class="row estimated-total padded clearfix"
+   ng-class="price.class">
+    <span class="col-md-9 text-right">
+        Estimated Total:
+    </span>
+    <span class="col-md-3 price">
+        <strong>
+            {{price.service.price * price.service.options.Quantity | currency}}
+        </strong>
+    </span>
+</div>

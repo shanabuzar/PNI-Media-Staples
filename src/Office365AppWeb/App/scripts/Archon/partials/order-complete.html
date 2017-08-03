@@ -1,0 +1,21 @@
+﻿<div class="screen">
+    <div class="text-center" id="orderInfo" ng-show="complete.orderDetails.Total">
+        <img ng-src="{{complete.base}}style/images/finished.png">
+        <h1>Order Submitted</h1>
+        <p>Thank you for your order, a confirmation email will be sent out shortly.</p>
+        <h2>Email address:</h2>
+        <span>{{complete.orderDetails.PickupInfo.EMailAddress}}</span>
+        <p>&nbsp;</p>
+        <h2>Order will be ready by:</h2>
+        <span>If placed before 2PM. Same day.<br/>If placed after 2PM. Next day.</span>
+        <p>&nbsp;</p>
+        <h2>Pick up at:</h2>
+        <span>{{complete.orderDetails.PickupLocation.Address1}}<br />{{complete.orderDetails.PickupLocation.City}}, {{complete.orderDetails.PickupLocation.StateProvince}} {{complete.orderDetails.PickupLocation.PostalCode}}</span>
+        <p>&nbsp;</p>
+        <h2>Payment will be due at pick up:</h2>
+        <span class="price">{{complete.orderDetails.Total.Total | currency}}</span>
+        <p>&nbsp;</p>
+        <p><img class="padded" ng-src="{{complete.base}}style/images/star.png" /></p>
+        <span class="footnote"><strong>Satisfaction Guaranteed!</strong></span><br /><span class="footnote">If you're not satisfied with your order,<br />let us know &amp; we'll make it right!</span>
+    </div>
+</div>

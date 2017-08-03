@@ -1,0 +1,75 @@
+﻿<div class="screen padded">
+    <div class="form-group">
+        <h2>Select a store for pickup</h2>
+        <form ng-submit="selector.findLocations()">
+            <!--#AZ: Commented below and added its alternate-->
+            <!--<input type="text" maxlength="150" placeholder="Enter City, State or Zip Code" ng-model="selector.query">-->
+            <input type="text" maxlength="150" placeholder="Enter City, State or Zip Code" ng-model="selector.query" class="Search" ng-minlength='selector.clearSearch()'>
+            
+
+            <!--#AZ: Added below button-->
+            <button type="button" ng-click='selector.findLocations()' class="btn" style="background-color:white">
+                <img src="../../../../find.png" />
+            </button>
+
+        </form>
+    </div>
+    <div ng-show="selector.results.locations.length > 0 && selector.results.show">
+        <!--<div ng-repeat="location in selector.results.locations track by location.StoreId"
+                ng-click="selector.selectLocation(location)"
+                class="location listItem clickable block">
+            <address>
+                {{location.Address1}}, {{location.StateProvince}}, {{location.PostalCode}}
+            </address>
+        </div>-->
+        <ul class="list-unstyled">
+            <li class='address'
+                ng-class="{'last': $last}"
+                ng-repeat="location in selector.results.locations track by location.StoreId">
+                <div class="item-group pointer">
+                    <div class="row" ng-click="selector.selectLocation(location)" ng-dblclick="selector.selectLocation(location); selector.next()">
+                        <span class="col-md-2"><img ng-src="{{selector.base}}style/images/{{location.icon}}.png" /></span>
+                        <span class="col-md-7">
+                            {{location.Address1}}, {{location.StateProvince}}, {{location.PostalCode}}
+                        </span>
+                        <span class="col-md-3">{{location.distance|number:1}} Mi</span>
+                    </div>
+                </div>
+                <div class="more-info" ng-style="location.cssmod">
+                    <div class="item-group">
+                        <img height="80" ng-src="{{location.map}}" border='0' />
+                    </div>
+                    <div class="item-group">
+                        <div class="row item-group">
+                            <span class="heading col-md-5">Store Info</span>
+                            <span class="text-right col-md-7"><img ng-src="{{selector.base}}style/images/tel.png" />&nbsp;&nbsp;{{location.Phone}}</span>
+                        </div>
+                    </div>
+                    <div class="item-group">
+                        <div class="row" ng-repeat="day in location.HoursConsolidated">
+                            <span class="col-md-5">{{day.DayOfWeek}}</span>
+                            <span class="text-right col-md-7">{{day.OpeningTime}} - {{day.ClosingTime}}</span>
+                        </div>
+                    </div>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div ng-show="selector.results.locations.length == 0">
+        <h2>No Locations Found</h2>
+        <div class='listItemSeparator'></div>
+        <p class="padded">Sorry! It doesn't look like anything is near that address.<br />Please try a different address.</p>
+    </div>
+    <div ng-show="selector.results.errorMsg">
+        <h2>Uh-oh!</h2>
+        <p>{{selector.errorMessage}}</p>
+    </div>
+    <pni-pricing></pni-pricing>
+    <div class="pull-right anchored-footer clearfix">
+        <button ng-disabled="master.error.show.message" ng-click='selector.back()' class="btn btn-action btn-grey">Back</button>
+        <!--#AZ commented below-->
+        <!--<button ng-show="!selector.selectedLocation || !selector.results.show" ng-click='selector.findLocations()' class="btn btn-action btn-staples">Search</button>-->
+        <!--<button ng-show="selector.selectedLocation && selector.results.show" ng-click='selector.next()' class="btn btn-action btn-staples">Next</button>-->
+        <button ng-disabled="(!selector.selectedLocation && !selector.results.show) || selector.results.locations.length == 0" ng-click='selector.next()' class="btn btn-action btn-staples">Next</button>
+    </div>
+</div>

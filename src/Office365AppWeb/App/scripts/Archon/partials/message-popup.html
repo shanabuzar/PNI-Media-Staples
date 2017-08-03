@@ -1,0 +1,10 @@
+﻿<div class="backdrop" ng-show="msg.errorObj.show">
+    <div class="inner">
+        <h4 data-ng-if="msg.errorObj.title">{{msg.errorObj.title}}</h4>
+        <p data-ng-bind-html="msg.errorObj.long"></p>
+        <div class="button-set">
+            <button class="btn btn-action btn-grey" data-ng-if="msg.errorObj.allowCancel" ng-click="msg.cancel()">CANCEL</button>    
+            <button class="btn btn-action btn-staples" ng-hide="msg.errorObj.hideClose" ng-click="msg.close()">OK</button>
+        </div>        
+    </div>
+</div>

@@ -1,0 +1,3662 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+ 
+<!--
+Version: 1.0.70
+Updated: 2015-10-26
+ABSType: Simple
+
+This targets file contains standard build scripts for building projects.
+
+	Reference URLs:
+		http://docs.nuget.org/docs/reference/nuspec-reference
+		http://stackoverflow.com/questions/2414047/how-to-escape-quote-marks-in-exec-command-in-msbuild
+		http://nuget.codeplex.com/workitem/1766
+		http://stackoverflow.com/questions/2459994/is-there-a-way-to-print-a-new-line-when-using-message
+		http://msbuildextensionpack.com/help/4.0.11.0/
+		http://stackoverflow.com/questions/24587436/pass-list-item-to-properties-when-calling-reusable-msbuild-target
+		http://phoebix.com/2013/08/08/who-got-the-func-part-3-generating-a-guid-in-msbuild/
+		http://stackoverflow.com/questions/878037/msbuild-msbuildcommunitytasks-task-time
+		
+	To Do's:
+		2015-07-14: GS - Add feature to "UpdateVersionGenericDOTNET" to fix issue when "BuildNumber" passed is full (xx.xx.xx.xx).  If value is full then overwrite?
+		2015-08-12: GS - Add feature to "UpdateVersionGenericDOTNET" to log file to XML for external info to be read like powershell.
+		
+	v1.0.0~1.0.5:
+		2013-03-06: GS - Added the following functions:
+					   - Fix update of package.nuspec
+					   - Support for passing version
+					   - Support for Sub folder collection
+					   - Support for Target Update
+					   - Support of exclude files
+					   - Fix the Temp build location of the nuget package
+	v1.0.6:
+		2013-04-04: GS - Disable the update of the targets path so it will stay defined correctly in the Package.nuspec.
+	v1.0.7:
+		2013-06-26: GS - Update to support update to description with version info.
+		2013-07-08: GS - Update to remove Read-Only flag from Package.nuspec file.
+	v1.0.8:
+		2013-08-15: ST - Made some changes (use $configuration$, default config, Changed Import to use local version,...)
+		2013-08-17: ST - Added a Compile build target since it's one of the most important build targets (including loading nuget packages)
+	v1.0.9:
+		2013-09-06: GS - Clean-Up and add version information update.
+	v1.0.10:
+		2013-10-08: GS - Add escape quote marks in Exec Command in MSBuild
+	v1.0.11:
+		2013-10-31: GS - Add batch process to support multiple nupkg files.
+	v1.0.12:
+		2014-04-08: GS - Add "OctoPack" simulation for "version" and "target". (/p:OctoPack=true)
+					   - Add PrepNuspec to support "binary/content/octopack"
+	v1.0.13:
+		2014-04-15: GS - Add Version to file.
+					   - Add Redirect if "build" is called
+	v1.0.14:
+		2014-05-13: GS - Add Read of AssemblyInfoBase.cs to get version information from the "AssemblyFileVersion"
+					   - Add "TeamCity-Build" to start to build out the hooks for TeamCity
+					   - Add condition to "TeamCity-Build" so when the AssemblyInfoBase.cs file does not exist then the check will not be ran.
+					   - Add "TeamCity-Build" option as part of "Build" directive but not "Compile" directive.
+	v1.0.15:
+		2014-05-28: GS - Add AssemblyInfoBase.cs update
+						 Added the ability to Check-Out and Check-In SemVer (AssemblyInfoBase.cs) file.
+	v1.0.16:
+		2014-05-28: GS - Clean-up and documentation.
+	v1.0.17:
+		2014-05-28: GS - Add ability to update SemVer of Version Major/Version Minor/Version Patch for developers use.  Once updated one the subsequent will be reset.
+						 Overhaul update method to use a generic update system for SemVer and have an isolated action just for the version increment.
+	v1.0.18:
+		2014-06-09: GS - Add "ABSType: Simple" for ABS system to detect what mode it should be running under.
+	v1.0.19:
+		2014-06-09: GS - Add VersionRelease to system.
+	v1.0.20:
+		2014-07-07: GS - Update project to support 3 types of NuGet version setting (Parameters; AssemblyInfoBase; nuspec).  This will allow for better automation. 
+						 If you do not pass any parameters to the project (/p:VersionUpdate=1.0.0 /p:VersionBuild=1000) then the project will look to see if it has an AssemblyInfoBase file.
+						 If the AssemblyInfoBase file is not found it will use the version set by the nuspec file.
+						 To Be Fixed: If /p:VersionUpdate is used but not /p:VersionBuild then the end nuspec does not show a build number.
+	v1.0.21:
+		2014-07-11: GS - Place an exception to the install of nuget packages to make sure the package.config exists.
+	v1.0.22:
+		2014-07-16: GS - Add support for Custom.targets.  This file will contain special build actions for an individual project, such as the ILMerge for the PC Framework.
+	v1.0.23:
+		2014-07-16: GS - Add support for nuspec file name override.
+						 Add DebugProject section to allow for quicker debug of properties.
+						 Add -NoDefaultExcludes for nuget package to support "." folders (http://nuget.codeplex.com/workitem/1766)
+						 Fix issue with version.  If version is defined in nuspec with x.x.x.x then script will NOT add 1000 to represent the build number as it is already defined.
+	v1.0.24:
+		2014-07-18: GS - Add Publish to local repository.
+	v1.0.25:
+		2014-07-21: GS - Update documentation
+						 Add UpdateNuGetEXE as part of build process so the NuGet.exe is always up to date locally.  No source control check-in done at this time.
+	v1.0.26:
+		2014-07-22: GS - Update documentation to have the version information as part of the comments for better version tracking.
+						 Update InstallNuGetPackages to remove the &quot; from the condition as that was not allowing for the condition to be ran. Padded quotes.
+	v1.0.27:
+		2014-07-24: GS - Update documentation for better layout.
+		2014-07-25: GS - Add AssemblyFileVersion_FULL_ISO
+		2014-07-28: GS - Add support for NuSpec override using the file extension for the file name.
+						 Add UnitTests/UnitTestsClean/MSTestUnitTests support (MSBuild current supported)
+						 Group Visual Studio Settings for faster update to next version of Visual Studio.
+		2014-07-29: GS - Update UnitTests to scan through .test, .UnitTest, .UnitTests in addition to the .tests
+	v1.0.28:
+		2014-07-29: GS - Add support for deprecated .BuildTools folder just as a backup for missing components.
+		2014-07-31: GS - Add temporary workspace mapping support to allow "TeamCity" to update SemVer and check the file back into TFS.
+						 Require the following to update TFS for temporary workspace.  If one of the parameters are missing the temporary workspace will not be created.
+							/p:TFSWorkspaceName={TempWorkspaceName}
+							/p:TFSProjectPath={$/}
+							/p:TFSServerName={vantfs001|tfs.photochannel.net}
+							/p:TFSCollectionName={Phoenix}
+	v1.0.29:
+		2014-08-01: GS - Add TFS Label system for TeamCity.  Based on same parameters for SemVer.  This two will Create/Delete temporary workspace.
+	v1.0.30:
+		2014-08-06: GS - Add support for "SetBuildNumber".  This allows us to override the build number as part of the "UpdateVersionBuild" option.
+	v1.0.31:
+		2014-08-07: GS - Add support for NuGet repo updates when pulling from repos. (Rules to turn Release/Debug & Tools On/Off need to be defined)
+						 Clean up hard coded repos in the publish section.  Now using a single point of change for the NuGet repos.
+		2014-08-11: GS - Set build to only pull from defined repos in NuGet.Config.
+		2014-08-12: GS - Add support for version override when packaging nuget package. "ExternalPack" will allow for using "VersionFull" as part of the package name when used with AssemblyInfoBase.cs
+						 This was designed for packaging 3rd Party packages such as the MediaClip projects.
+	v1.0.32
+		2014-08-12: GS - Fix conditional statement for builder
+		2014-08-13: GS - Add "Clear" for "NuGet.org" in nuget.config file.
+		2014-08-20: GS - Fix InstallNuGetPackage setting where the project would scan subdirectories from where the file is ran vs. where the file resides. Replaced (MSBuildStartupDirectory) with (MSBuildProjectDirectory) 
+		2014-08-21: GS - Fix NuSpecOverride as "Copy Path" was not working when path was blank.
+	v1.0.33
+		2014-09-08: GS - Add Austin and Offline prep for NuGet Repos.  Moved around the Vancouver settings too.
+		2014-09-09: GS - Add "AddNuGetConfig" to update the NuGet.config file.  There needs to be more updates to this action because it will "Blank Out" and create duplicate entries.
+		2014-09-11: GS - Add "MSBuild Extension Pack" definition for "AddNuGetConfig" option.
+					   - Add "MSBuildCommunityTasks_Status" and "MSBuildExtensionPack_Status" detection condition to allow for better conditional logic for some targets.
+					   - Update "AddNuGetConfig" to use the condition of the "MSBuildExtensionPack_Status" as its required.
+	v1.0.34
+		2014-09-16: GS - Add support for web.config transform system.
+	v1.0.35
+		2014-09-18: GS - Add PackageProjectWeb system to package web project into a zip file and store it in the "Artifacts" folder.  You must provide "PackageProjectName" parameter.
+						 This feature will need to be updated to support for "Custom Filters".
+					   - Clean-up Documentation.
+	v1.0.36
+		2014-09-23: GS - Add Hooks for "MSBuild Community Tasks" and "MSBuild Extension Pack" nuget packages.  This will install the packages so that we will not need to store them in TFS.
+						 This feature is not active as there is an issue to get the "import" of the files from the new location to work.  Requiring a way to re-initialize the new packages after they have been installed.
+	v1.0.37
+		2014-09-24: GS - Add "http://nuget.photochannel.net" to repo system.
+		2014-09-25: GS - Add "ClearPackageCache" to "InstallNuGetPackages" system.  We have ran into issues where a NuGet package is stored in the cache but not being cleared.
+					   - Fix "MSBuildExtensionsPath" override to go to the ".Utilities" instead of the "C:\Program Files (x86)\MSBuild\" folder.
+	v1.0.38
+		2014-09-26: GS - Rename "MSBuild Extension Pack" to "MSBuildExtensionPack" to help with better path management.
+					   - Fix issue with MSTest path.  Replace standard "%%" with "$()".
+					   - Add ContinueOnError="WarnAndContinue" for UnitTests
+					   - Add Upload of MSBuild files to TeamCity.
+					   - Add TeamCityActivation parameter to turn on/off TeamCity actions.
+		2014-09-30	GS - Update Documentation for PackageProjectWeb
+					   - PackageProjectWeb: Add filter to not package the "Properties" folder
+					   - Update project to fix NuGet Package issue with missing versionRelease.
+					   - Update Transform system to support project name and missing target.
+					   - Add a "MSBuild_System_Path" variable to be used like the "MSBuildExtensionsPath"
+	v1.0.39
+		2014-10-01: GS - Add "TeamCity-GITLabel" action.  This will take the VCSLabel variable and do a find/replace of " " to "_".
+					   - Update "PackageProjectWeb" to filter *.user & *.exp files
+		2014-10-02: GS - Update "NuGet update -self" to support ContinueOnError="WarnAndContinue".  This would be required when trying to do a build Offline.
+					   - Add load of "Library.Targets" with condition.
+					   - Update "PackageProjectWeb" to filter
+		2014-10-03: GS - Add "RunOctoPack" option for compile.  This should remove the need to create and environment variable "RunOctoPack=True".
+					   - Update file with cleaning up structure and spacing.
+	v1.0.40
+		2014-10-06: GS - Update project with debug info for TFSWorkspaceSettings
+					   - Add "SemVerCommentOverride" parameter to override the check-in comment to use only the version number.
+		2014-10-09: GS - Change nuget output to be placed in an "Artifacts" folder like other projects and replaced the hard coded "Artifacts" path with $(BuildArtifacts)
+					   - Add $(BuildType) in preparation for official builds.  Property has been added to how the UpdateNuGetConfig is setting the nuget.config file.
+					   - Add InstallNuGetPackagesRetry.  This will be executed if the InstallNuGetPackages fails the first time.
+					   - Add DevSite=Blank to set the NuGetConfig to have blank values for debug.
+		2014-10-10: GS - Update support for Octopus package and deploy.
+		2014-10-14: GS - Fix project with NuGet packages now going to Archive.  Some actions were still looking in hard-coded SolutionDir\nupkg.
+		2014-10-15: GS - Add PackageProjectSubFolder parameter to allow for subfolder paths when packaging up a web project.
+					   - Add /overwrite to the SemVerUpdateBuild when pulling the AssemblyInfoBase file from TFS.
+					   - Add Publish /PublishArtifacts.  This will publish the artifacts to the network.
+		2014-10-16: GS - Update project to fix "Blank" Error Code for NuGet Install.
+					   - Add more conditions to publish.  This will help with better default settings.
+		2014-10-17: GS - Add CustomCompile hook to override the current compile system.  Value would be defined in the Custom.targets file (<CustomCompile>true</CustomCompile>).  
+						 Preparation for CustomPackage has also been added to the Custom.targets but no hooks have been added to the project.targets yet.
+					   - Update OverRideVS to support multiple VSVersions as well as remove a bit more hard-coded values.
+					   - Move a few settings out of the "Default Settings" property group and into there own property group.
+					   - Add "DebugProjectMicrosoft" to display settings defined in the project for Microsoft.
+					   - Update minor documentation
+	v1.0.41
+		2014-10-20: GS - Split nuget settings in to its own Property Group.
+					   - Fix "BuildPreReq" to install the two nuget packages required for the build system.  
+						 Also update the project to check if any of the paths for the "MSBuild" 3rd party paths exist so if they are missing the run will not totally fail.
+					   - Add InitialTargets="BuildPreReq" to install nuget packages of the MSBuild extensions if needed.
+		2014-10-23: GS - Remove the condition of Condition="'$(BuildType)' == 'Official'" from the PublishArtifacts to allow for any type of build to publish to the network such as nightly builds.
+					   - Add PackageApp to package applications that are not websites or NuGet packages.  Also supported with this is the /p:Platform.  Some projects may store there dlls in a "Platform" folder (x64) within the bin folder.
+					   - Add filter of *.nuspec in the PackageProjectWeb and the PackageApp targets.
+		2014-10-24: GS - Add PackageZipOverride option to override part of the package zip name.
+					   - Minor updates to package system in preparation for a minor overhaul to "package parameters"
+					   - Add filter for *.nupkg files in Packaging systems
+					   - Add Shell for "PackageSource"
+					   - Change Zip system.  Old system was hanging on Photosite packages.
+	v1.0.42
+		2014-10-24: GS - Update packaging filter.
+		2014-11-03: GS - Re-organize Targets and variables.
+					   - Update "AddNuGetConfig" to eliminate the duplication when there is an existing Attribute/Element.
+					   - Update packaging system to put the zip packages in a subfolder "$(Configuration)" to match the nuget packaging system.
+		2014-11-05	GS - Add new "Archive" system.  This system has been built to copy Octopus packages from the generated folder to the Archive folder.
+					   - Add Debug info for Packaging system.
+		2014-11-06: GS - Add ABS_InfoCurrent to display what version the build script is.  This is the first step in getting the build script to upgrade itself.			   
+				       - Update UnitTest filter to use a variable.  This makes the updating easier to read.  Using the same approach with the Web Package system.
+					   - Add another include filter for MSTest system to better adapt to Qpp projects (.\**\Test.*.dll;.\**\Tests.*.dll)
+					   - Start to build hooks for NUnit unit testing.
+					   - Clean-up MSTest settings based on how to interact with NUnit settings so testing does not get mixed between them.
+	v1.0.43
+		2014-11-07: GS - Start building hooks in for JMeter integration testing.
+		2014-11-18: GS - Updates to structure to support the breakdown of the build scripts to a manageable state.
+		2014-11-19: GS - Add Exclude="$(CustomSLNExclude)" to the SolutionFiles Item.  This entry "$(CustomSLNExclude) will be defined in the Custom.targets ItemGroup and will allow for filtering out solutions that don't want to be built.
+		2014-11-20: GS - Fix issue with ABS_InfoCurrent when building NuGet packages. TeamCity appends a ".TeamCity" to the "MSBuildProjectName" and "MSBuildProjectFullPath".  Changing over to "MSBuildThisFile" and "MSBuildThisFileFullPath", but aliasing it with "ABS".
+	v1.0.44
+		2014-11-27: GS - Add support for VSTest testing system.
+		2014-12-02: GS - Update system to support $version$ in nuspec system.
+					   - Update NuGet WebServer URLs and prep for support for Azure Server.
+					   - ToDo: Re-factor the NuGet Repo paths.  Current system has parts of the path in a PropertyGroup and another has it in a Choose system.
+		2014-12-03: GS - Add features to turn on/off some of the Debug messages.
+					   - Add more polish to the push to NuGet Gallery script.
+					   - ToDo: AutoChange the "iconUrl" in the nuspec file to set "current" location of the PNILogo.png file.
+	v1.0.45
+		2014-12-05: GS - Add a bypass filter for MSBuild to set Error as Warnings or fail on error.
+		2014-12-09: GS - Fix URL path for NuGet Gallery
+					   - Fix 3rdParty publish to support NuGet Gallery.
+					   - Fix issue with deploying to Official UNC path.
+					   - Add .TrimEnd('\') to the package scanner for each of the publish actions.  this will allow for the NuGet Push to not have a "\\" in the path as that makes the push fail.
+	v1.0.46				   
+		2014-12-11: GS - Move Custom Imports to an Index.targets file.
+					   - Changes to how the project is going to handle more custom actions.  The plan will be to clean up the existing projects and move non-essential functions out to server side scripts.  Core functionality should stay in tact.
+					   - External Support: HipChat
+					   - Fix WebURL to use "/api/v2/" for NuGet Gallery
+					   - Add NuGet Publish URL as to not use the "/api/v2/" when doing a NuGet publish
+		2014-12-12: GS - Update UNC paths to fix bug with uploading to 3rd Party folder and Official folder for NuGet network repositories.
+	v1.0.47
+		2014-12-18: GS - Add EnablePackageRestore to InstallNuGetPackages
+		2014-12-19: GS - Update Import project for Index.targets to look "Local" then "ServerSide"
+					   - Check to see if the NuGet Cache exists, then delete if true.
+	v1.0.48
+		2015-01-05: GS - Migrate "TeamCity" components to the "ABS_TeamCity.targets" file.  Development does not require these features locally so this will streamline the standard project.
+					   - Add "Disable" nuget repo, also required "Enable" nuget repo.
+					   - Move SemVer system out to "ABS_TFS.targets" as it is closely coupled with TFS Check-In/Out
+		2015-01-06: GS - Move more TFS components out to "ABS_TFS.targets" as not required locally.			   
+	v1.0.49
+		2015-01-09: GS - Fix issue with TeamCity-Build being called from "Build" Target.  Remove the (CallTarget Targets="TeamCity-Build") and will change TeamCity to call it directly.  That step will then call Compile directly. "Special Actions" should display a message for running locally.
+	v1.0.50
+		2015-01-13: GS - Update documentation.
+					   - Add "QuickBuild" option to allow for us to skip some actions like package restore.
+		2015-01-16: GS - Add filter to ignore the NuGet packaging if .nuspec does not exist.  This will help stop failing builds if the package file does not exist.
+		2015-01-19: GS - Update "Compile" to depend on boot.  This will allow us to see what version the compile is working on.
+	v1.0.51
+		2015-01-19: GS - Enhance "QuickBuild" to help speed up the PHX build project, and add "QuickNuGet" option to segregate two actions.
+					   - Change the "QuickBuild" and "QuickNuGet" to "CleanBuild" and "CleanNuGet" and by default they are set to true. You will need a false flag to stop that action.
+					   - Add "InstallNuGet" to allow for us to turn On/Off NuGet Clean/Restore. Default is true.
+					   - Fix issue with NuGet package system looping if there are multiple nuspec files when trying to copy to Artifacts folder.
+	v1.0.52
+		2015-01-22: GS - GIT Branch Hooks. (Changes within the TeamCity and GIT target files.)
+		2015-01-26: GS - Replaced "$(NuGetPackageFolder)\*.nupkg" with "%(LocalNupkg.Identity)"
+		2015-01-30: GS - Add "UpdateAssemblyCopyright" for AssemblyInfoBase.cs to Set/Reset the Copyright information.
+					   - Add "UpdateAssemblyCompany" for AssemblyInfoBase.cs to Set/Reset the Company information.
+	v1.0.53
+		2015-02-03: GS - Fix issue where TeamCity version update is being overridden as part of the build. (ABS_TeamCity.targets)
+	v1.0.54
+		2015-02-10: GS - Update project to only copy Artifacts if Artifacts folder exists.
+		2015-02-12: GS - Add additional Enable Restore option for NuGet (EnableNuGetPackageRestore)
+	v1.0.55
+		2015-02-17: GS - PackageApp: Filter PDB files for Release builds; Change RemoveRoot as to NOT package in the "Configuration" folder.
+	v1.0.56
+		2015-02-23: GS - BuildPreReq: Add Debug comments
+					GS - NuGetSettings: Add NuGet_Status variable and add a Warning message if nuget.exe is not found.
+					GS - GLOBAL: Replace "Nuget" with "NuGet"
+					GS - BuildPreReq: Update to use NuGet_Status, so when the script is ran and the nuget.exe file is not around then the build should not fail.
+		2015-02-26: GS - Compile: Add extra Debug Message to display what solution would be ran.
+		2015-03-02: GS - NuGetUpdate: Fix issue with overwriting "Exclude" filter.  Now package will scan an determine if the value is missing and will add/append.
+		2015-03-05: GS - PackageApp: Add Message to display configuration.
+	v1.0.57
+		2015-03-20: GS - PackageFilder: Add this package system to support the zip of any folder and all content.  Driven out of the need to package Partial files.
+	v1.0.58
+		2015-03-25: GS - Add support for NPM, Grunt and Karma (Phase 1).
+		2015-03-26: GS - Package: Remove NuGetPackageSettings from DependsOnTargets
+					   - BuildPreReq: Remove NuGetPackageSettings from DependsOnTargets
+					   - Compile: Split out actions to "MSCompile" Target and have a call to run Standard or Custom.  
+						 This will also allow for different types of compiles to be added in the future and to not have the NuGet actions triggered as part of the Custom Build.
+		2015-03-28:	GS - PackageOcto: Create option to generate direct Octopus packages. MSBuild Project.targets /t:PackageOcto /p:PackageFolderName=Template
+	v1.0.59
+		2015-03-30: GS - Fix issue with Empty CustomCompile variable.
+	v1.0.60
+		2015-03-30: GS - Add NuGetSettings as dependency to Publish3rdParty; PublishCandidate; PublishOfficial
+	v1.0.61
+		2015-03-30: GS - Update Grunt compile to use global version.
+					   - Add fix to OctoPack to only package if the source folder exists.
+		2015-04-01: GS - Add Path system for Grunt build. Grunt build is working locally but is not working within TeamCity due to path related issues.  Grunt for TeamCity is being placed on hold to run natively.
+		2015-04-02: GS - GetVersionNumberFromFile: Change how this function is called to support multiple version types.  Renamed old system to "GetVersionNumberFromFileDOTNET" and add "GetVersionNumberFromFileJSON" with the default being "GetVersionNumberFromFileDOTNET". Parameter to override is "VersionFileType=.NET|JSON"
+					   - UpdateVersionGeneric: Change how this function is called to support multiple version types.  Renamed old system to "UpdateVersionGenericDOTNET" and add "UpdateVersionGenericJSON" with the default being "UpdateVersionGenericDOTNET". Parameter to override is "VersionFileType=.NET|JSON"
+	v1.0.62
+		2015-04-16: GS - Update ReleaseRemoteDistribPath to publish to TeamCity.  This will eventually be used in the Update Incidents action.
+	v1.0.63
+		2015-05-12: GS - OctoPackAddOn: Created to allow for us to add the OctoPack option to any standard package system.
+		2015-05-13: GS - OctoPackAddOn: Redesign due to proper values not allowed to be passed through targets.
+					   - Package: Turn on package filter system.  Defaults to creating NuGet Packages.  Also added options for Folder and Octo.
+	v1.0.64
+		2015-06-01: GS - MSCompile: Re-Enable the InstallNuGetPackages option.
+	v1.0.65
+		2015-06-03: GS - GenerateNewGuid: Add function.
+	v1.0.66
+		2015-06-05: GS - Create Shell for supporting nDepend (http://www.ndepend.com/docs/teamcity-integration-ndepend)
+		2015-06-08: GS - Update nDepend support to lessen the requirement of hard coded variables.
+	v1.0.67
+		2015-06-29: GS - PackageFolder: Add support for OctoPack.  This is to phase out an additional step for Partial packaging.
+		2015-07-08: GS - PackageOcto: Add override system for supporting "OctoPackPackageVersion".  If value is set then it will use that version, if not then it defaults to the standard build version.
+	v1.0.68
+		2015-07-16: GS - dosKey  (ProtoType): Create feature to allow for the script to host the dosKeys for faster running.
+	v1.0.69
+		2015-07-25: GS - PackageNuGetBulk: Add "-Prop FileVersion" for backwards compatibility with older nuspec files.
+					   - Add "BlackOps" segment to system for new Repos.
+		2015-07-26: GS - Change ExternalPack from VersionFull to VersionWrite
+		2015-08-12: GS - GetVersionNumberFromFileDOTNET: Add WriteLinesToFile to capture version to external file to be read by other systems.  *TO BE REPLACED with xml file.
+		2015-08-14: GS - UpdateNuspec: Add condition for ExternalPack is true when checking for $version$
+		2015-08-19: GS - PackageProjectWeb/PackageApp: Add additional filters.
+		2015-08-21: GS - Add PackageProjectWebSplitImages and PackageProjectWebSplitSite to isolate components.
+		2015-08-22: GS - Update file array names in Packaging targets to be individual so when running more then one the arrays don't get crossed.
+		2015-08-25: GS - Add opiton for the SLN search to go to all folders to find the solution files. (SolutionSub=True)
+		2015-08-26: GS - Add additional hook for CustomSLNInclude system.
+					   - Add "ContinueOnError="True"" to some debug messages.
+					   - Add better handel for building with solution files being defined in the Custom.targets file.
+	v1.0.70
+		2015-10-01: GS - Add option to turn On/Off of nuspec update. (Default = True)
+		2015-10-08: GS - Update project to support OctoPackTag.
+		2015-10-26: GS - Add ISODate System.
+					   - Change the folder structure for nightly builds to be stored in a date formatted structure to allow for faster purge.
+-->
+
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0" DefaultTargets="Info" InitialTargets="BuildPreReq">
+	<!--  BackUp: InitialTargets="BuildPreReq" -->
+	<!-- Setup default properties -->
+	<PropertyGroup> <!-- General Settings -->
+		<Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+
+		<CleanBuild Condition="'$(CleanBuild)' == 'true'">true</CleanBuild>
+		<CleanBuild Condition="'$(CleanBuild)' == ''">true</CleanBuild>
+		<CleanBuild Condition="'$(CleanBuild)' != 'false'">true</CleanBuild>
+		<CleanBuild Condition="'$(CleanBuild)' == 'false'">false</CleanBuild>
+		
+		<CleanNuGet Condition="'$(CleanNuGet)' == 'true'">true</CleanNuGet>
+		<CleanNuGet Condition="'$(CleanNuGet)' == ''">true</CleanNuGet>
+		<CleanNuGet Condition="'$(CleanNuGet)' != 'false'">true</CleanNuGet>
+		<CleanNuGet Condition="'$(CleanNuGet)' == 'false'">false</CleanNuGet>
+		
+		<InstallNuGet Condition="'$(InstallNuGet)' == 'true'">true</InstallNuGet>
+		<InstallNuGet Condition="'$(InstallNuGet)' == ''">true</InstallNuGet>
+		<InstallNuGet Condition="'$(InstallNuGet)' != 'false'">true</InstallNuGet>
+		<InstallNuGet Condition="'$(InstallNuGet)' == 'false'">false</InstallNuGet>
+		
+		<InstallNPM Condition="'$(InstallNPM)' == 'true'">true</InstallNPM>
+		<InstallNPM Condition="'$(InstallNPM)' == ''">true</InstallNPM>
+		<InstallNPM Condition="'$(InstallNPM)' != 'false'">true</InstallNPM>
+		<InstallNPM Condition="'$(InstallNPM)' == 'false'">false</InstallNPM>
+				
+		<versionWrite Condition="'$(versionUpdate)' == ''">$(versionRead)</versionWrite>
+		<versionWrite Condition="'$(versionUpdate)' != ''">$(versionUpdate)</versionWrite>
+		<versionFull Condition="'$(versionBuild)' == ''">$(versionWrite)</versionFull>
+		<versionFull Condition="'$(versionBuild)' != ''">$(versionWrite).$(versionBuild)</versionFull>
+		<versionRelease>$(versionWrite)</versionRelease>
+
+		<versionPackage Condition="'$(OctoPack)' == ''">$(versionWrite)</versionPackage>
+		<versionPackage Condition="'$(OctoPack)' == 'true'">$(versionWrite).$(versionBuild)</versionPackage>
+		
+		<ExternalPack Condition="'$(ExternalPack)' == 'true'">true</ExternalPack>
+		
+		<BuildArtifacts>$(MSBuildProjectDirectory)\Artifacts</BuildArtifacts>
+		<BuildArtifactsServerRemote>\\photochannel.net\dfs\builds\</BuildArtifactsServerRemote>
+		<DebugMsg>false</DebugMsg>
+		
+		<!-- Local Build Tools (Deprecated) -->
+			<BuildToolsRoot Condition="Exists('$(SystemDrive)\.BuildTools')">$(SystemDrive)\.BuildTools</BuildToolsRoot>
+
+			<BuildToolsPackage>PNI.BuildTools</BuildToolsPackage>
+			<BuildToolsPath Condition="'$(BuildToolsRoot)' != ''">$(BuildToolsRoot)\$(BuildToolsPackage)</BuildToolsPath>
+		<!--************************************-->
+
+		<!-- Local Build Tools-->
+			<UtilitiesPath>%(SolutionRoot.FullPath)\.Utilities</UtilitiesPath>
+
+			<!-- MSBuild Community Tasks -->
+			<MSBuildCommunityTasks_Package>MSBuild.Community.Tasks</MSBuildCommunityTasks_Package>
+			<MSBuildCommunityTasks_Version>1.4.0.42</MSBuildCommunityTasks_Version>
+			<!--
+				<MSBuildCommunityTasksPath Condition="'$(MSBuildCommunityTasksPath)' == ''">.Utilities\MSBuildCommunityTasks</MSBuildCommunityTasksPath>
+				<MSBuildCommunityTasksLib>MSBuild.Community.Tasks.dll</MSBuildCommunityTasksLib>
+			-->
+
+			<!-- MSBuild Extension Pack -->
+			<MSBuildExtensionPack_Package>MSBuild.ExtensionPack</MSBuildExtensionPack_Package>
+			<MSBuildExtensionPack_Version>4.0.4.0</MSBuildExtensionPack_Version>
+			<MSBuildExtensionsPath>$(MSBuildProjectDirectory)\.Utilities</MSBuildExtensionsPath>
+			<ExtensionTasksPath>$(MSBuildExtensionsPath)\MSBuildExtensionPack\</ExtensionTasksPath>
+			<MSBuild_System_Path>$(ProgramFiles)\MSBuild\</MSBuild_System_Path>
+		<!--************************************-->
+
+		<!-- Settings: Semantic Versioning -->
+			<SemVerFile>AssemblyInfoBase.cs</SemVerFile>
+			<SemVerCheckinComment>$([System.DateTime]::Now.ToString(`yyyy-MM-dd`)): %USERNAME% - Update $(SemVerFile) to keep Semantic Versioning in sync in source control.</SemVerCheckinComment>
+			<SemVerCheckinOverrideReason>$(SemVerCheckinComment)</SemVerCheckinOverrideReason>
+		<!--***************************-->
+
+		<!-- Settings: NUnit -->
+			<NUnitPath>C:\.BuildTools\PNI.BuildTools-\NUnit-2.6.3\bin</NUnitPath>
+		<!--*****************-->
+		<!-- Settings: JMeter -->
+			<JMeterPath>C:\.BuildTools\apache-jmeter-2.11\bin</JMeterPath>
+		<!--*****************-->
+		<!-- Settings: NAnt -->
+			<NAntPath>C:\.BuildTools\nant-0.92\bin\nant.exe</NAntPath>
+		<!--*****************-->
+
+	</PropertyGroup>
+
+	<PropertyGroup> <!-- SkyNet -->
+		<SkyNetRoot Condition="Exists('$(SystemDrive)\.BuildTools')">$(SystemDrive)\.BuildTools</SkyNetRoot>
+		<SkyNetPackage>PNI.MSBuildCustom</SkyNetPackage>
+		<SkyNetPath Condition="'$(SkyNetRoot)' != ''">$(SkyNetRoot)\$(SkyNetPackage)</SkyNetPath>
+	</PropertyGroup>
+	
+	<PropertyGroup> <!-- Automated Build Script Settings -->
+		<ABSThisFileDirectory>$(MSBuildThisFileDirectory)</ABSThisFileDirectory>
+		<ABSThisFile>$(MSBuildThisFile)</ABSThisFile>
+		<ABSThisFileFullPath>$(MSBuildThisFileFullPath)</ABSThisFileFullPath>
+	</PropertyGroup>
+	
+	<PropertyGroup> <!-- Microsoft Settings -->
+		<!-- Visual Studio 2008 -->
+			<!-- Visual Studio Environment -->
+			<VS90DevCmd>$(Vs90ComnTools)\vsvars32.bat</VS90DevCmd>
+			<!-- Team Foundation Server -->
+			<VS90TFS>$(Vs90ComnTools)..\IDE\tf.exe</VS90TFS>
+			<!-- MSTest -->
+			<MSTestVS90>$(VS90COMNTOOLS)\..\IDE\mstest.exe</MSTestVS90>
+			<!-- Visual Studio Web Developer Tools-->
+			<VS90DevWeb>$(MSBuild_System_Path)\Microsoft\VisualStudio\v9.0\Web\Microsoft.Web.Publishing.Tasks.dll</VS90DevWeb>
+		<!--************************************-->
+
+		<!-- Visual Studio 2010 -->
+			<!-- Visual Studio Environment -->
+			<VS100DevCmd>$(Vs100ComnTools)\vsvars32.bat</VS100DevCmd>
+			<!-- Team Foundation Server -->
+			<VS100TFS>$(Vs100ComnTools)..\IDE\tf.exe</VS100TFS>
+			<!-- MSTest -->
+			<MSTestVS100>$(VS100COMNTOOLS)\..\IDE\mstest.exe</MSTestVS100>
+			<!-- Visual Studio Web Developer Tools-->
+			<VS100DevWeb>$(MSBuild_System_Path)\Microsoft\VisualStudio\v10.0\Web\Microsoft.Web.Publishing.Tasks.dll</VS100DevWeb>
+		<!--************************************-->
+
+		<!-- Visual Studio 2012 -->
+			<!-- Visual Studio Environment -->
+			<VS110DevCmd>$(Vs110ComnTools)\VsDevCmd.bat</VS110DevCmd>
+			<!-- Team Foundation Server -->
+			<VS110TFS>$(Vs110ComnTools)..\IDE\tf.exe</VS110TFS>
+			<!-- MSTest -->
+			<MSTestVS110>$(VS110COMNTOOLS)\..\IDE\mstest.exe</MSTestVS110>
+			<!-- Visual Studio Web Developer Tools-->
+			<VS110DevWeb>$(MSBuild_System_Path)\Microsoft\VisualStudio\v11.0\Web\Microsoft.Web.Publishing.Tasks.dll</VS110DevWeb>
+		<!--************************************-->
+
+		<!-- Visual Studio 2013 -->
+			<!-- Visual Studio Environment -->
+			<VS120DevCmd>$(Vs120ComnTools)\VsDevCmd.bat</VS120DevCmd>
+			<!-- Team Foundation Server -->
+			<VS120TFS>$(Vs120ComnTools)..\IDE\tf.exe</VS120TFS>
+			<!-- MSTest -->
+			<MSTestVS120>$(VS120COMNTOOLS)\..\IDE\mstest.exe</MSTestVS120>
+			<!-- VSTest -->
+			<VSTestVS120>$(VS120COMNTOOLS)\..\IDE\CommonExtensions\Microsoft\TestWindow\VSTest.Console.exe</VSTestVS120>
+			<!-- Visual Studio Web Developer Tools-->
+			<VS120DevWeb>$(MSBuild_System_Path)\Microsoft\VisualStudio\v12.0\Web\Microsoft.Web.Publishing.Tasks.dll</VS120DevWeb>
+		<!--************************************-->
+				
+		<!-- Settings: Version Control (TFS) -->
+			<TfsExeLocation>$(VS110TFS)</TfsExeLocation>
+		<!--***************************-->
+		
+	</PropertyGroup>
+	
+	<PropertyGroup> <!-- Octopus Settings -->
+		<!-- Octopus Settings -->
+			<OctoPack Condition="'$(OctoPack)' == 'true'">true</OctoPack>
+			<!-- /p:OctoPackPublishPackageToFileShare -->
+			<OctoPackPublishPath>\\STGNAS001\Data\OctoPacked\Sites</OctoPackPublishPath>
+			<OctoPackPublishPath Condition="'$(BuildType)' == 'Official'">$(OctoPackPublishPath)\Official</OctoPackPublishPath>
+		<!--******************-->
+	</PropertyGroup>
+	
+	<PropertyGroup> <!-- NuGet Settings -->
+		<!-- Nuspec/NuGet Override -->
+			<NuSpecOverride>$(NuSpecOverride)</NuSpecOverride>
+			<NuSpecOverrideStatus>false</NuSpecOverrideStatus>
+			<NuSpecOverrideStatus Condition="'$(NuSpecOverride)' != ''">true</NuSpecOverrideStatus>
+			<NuSpecUpdate Condition="'$(NuSpecUpdate)' != False">true</NuSpecUpdate>
+			
+			<NuGetTargetOverride>$(NuSpecTargetOverride)</NuGetTargetOverride>
+			<NuGetTargetOverrideStatus>false</NuGetTargetOverrideStatus>
+			<NuGetTargetOverrideStatus Condition="'$(NuSpecOverride)' != ''">true</NuGetTargetOverrideStatus>
+		<!--*****************-->
+				
+		<!-- Repository Settings -->
+			<!-- Local Repositories -->
+				<NuGetRepoLocal>$(LocalRepoPath)</NuGetRepoLocal>
+				<NuGetRepoLocal Condition="'$(NuGetRepoLocal)' == ''">C:\Temp\LocalRepo</NuGetRepoLocal>
+			<!--***********-->
+
+			<!-- Internal Repositories -->
+				<!-- Vancouver -->
+					<NuGetRepoUNCVancouver>\\photochannel.net\dfs\repositories\nuget</NuGetRepoUNCVancouver>
+					<NuGetRepoURLVancouver>http://nuget.photochannel.net</NuGetRepoURLVancouver>
+				<!--***********-->
+				<!-- Austin -->
+					<NuGetRepoUNCAustin>\\austindc01.photochannel.net\FileShare\nuget</NuGetRepoUNCAustin>
+					<NuGetRepoURLAustin>http://nuget.photochannel.net</NuGetRepoURLAustin>
+				<!--***********-->
+				<!-- BlackOps -->
+					<NuGetRepoUNCBlackOps>\\vanfile\rmteam$\SourceCode\NugetRepo</NuGetRepoUNCBlackOps>
+					<NuGetRepoURLBlackOps>\\vanfile\rmteam$\SourceCode\NugetRepo</NuGetRepoURLBlackOps>
+				<!--***********-->
+				<!-- Other -->
+					<NuGetRepoURLAzure>http://nuget.photochannel.net</NuGetRepoURLAzure>
+					<NuGetRepoURLAzurePublish>http://nuget.photochannel.net</NuGetRepoURLAzurePublish>
+					
+					<NuGetRepoURLCloud3rdParty>$(NuGetRepoURLAzure)</NuGetRepoURLCloud3rdParty>
+					<NuGetRepoURLCloud3rdPartyPublish>$(NuGetRepoURLAzure)</NuGetRepoURLCloud3rdPartyPublish>
+					
+					<NuGetRepoURLCloudOfficial>$(NuGetRepoURLAzure)</NuGetRepoURLCloudOfficial>
+					<NuGetRepoURLCloudOfficialPublish>$(NuGetRepoURLAzure)</NuGetRepoURLCloudOfficialPublish>
+					
+					<NuGetRepoURLCloudCandidate>$(NuGetRepoURLAzure)/Development/</NuGetRepoURLCloudCandidate>
+					<NuGetRepoURLCloudCandidatePublish>$(NuGetRepoURLAzure)/Development/</NuGetRepoURLCloudCandidatePublish>
+				<!--***********-->
+				<!-- Official & Candidate -->
+					<NuGetRepoUNC3rdParty Condition="'$(DevSite)'!='BlackOps'">$(NuGetRepoUNCVancouver)\3rdParty</NuGetRepoUNC3rdParty>
+					<NuGetRepoURL3rdParty Condition="'$(DevSite)'!='BlackOps'">http://nuget.photochannel.net/api/v2/</NuGetRepoURL3rdParty>
+					<NuGetRepoURL3rdPartyPublish Condition="'$(DevSite)'!='BlackOps'">http://nuget.photochannel.net</NuGetRepoURL3rdPartyPublish>
+					
+					<NuGetRepoUNCOfficial Condition="'$(DevSite)'!='BlackOps'">$(NuGetRepoUNCVancouver)\Official\Release</NuGetRepoUNCOfficial>
+					<NuGetRepoURLOfficial Condition="'$(DevSite)'!='BlackOps'">http://nuget.photochannel.net/api/v2/</NuGetRepoURLOfficial>
+					<NuGetRepoURLOfficialPublish Condition="'$(DevSite)'!='BlackOps'">http://nuget.photochannel.net</NuGetRepoURLOfficialPublish>
+					
+					<NuGetRepoUNCCandidate Condition="'$(DevSite)'!='BlackOps'">$(NuGetRepoUNCVancouver)\Teams\Common\</NuGetRepoUNCCandidate>
+					<NuGetRepoURLCandidate Condition="'$(DevSite)'!='BlackOps'">http://nuget-pre.photochannel.net/api/v2/</NuGetRepoURLCandidate>
+					<NuGetRepoURLCandidatePublish Condition="'$(DevSite)'!='BlackOps'">http://nuget-pre.photochannel.net</NuGetRepoURLCandidatePublish>
+				<!--***********-->
+				<!-- Official & Candidate (BlackOps) -->
+					<NuGetRepoUNC3rdParty Condition="'$(DevSite)'=='BlackOps'">$(NuGetRepoUNCBlackOps)\3rdParty</NuGetRepoUNC3rdParty>
+					<NuGetRepoURL3rdParty Condition="'$(DevSite)'=='BlackOps'">http://nuget.photochannel.net/api/v2/</NuGetRepoURL3rdParty>
+					<NuGetRepoURL3rdPartyPublish Condition="'$(DevSite)'=='BlackOps'">http://nuget.photochannel.net</NuGetRepoURL3rdPartyPublish>
+					
+					<NuGetRepoUNCOfficial Condition="'$(DevSite)'=='BlackOps'">$(NuGetRepoUNCBlackOps)\Official\Release</NuGetRepoUNCOfficial>
+					<NuGetRepoURLOfficial Condition="'$(DevSite)'=='BlackOps'">http://nuget.photochannel.net/api/v2/</NuGetRepoURLOfficial>
+					<NuGetRepoURLOfficialPublish Condition="'$(DevSite)'=='BlackOps'">http://nuget.photochannel.net</NuGetRepoURLOfficialPublish>
+					
+					<NuGetRepoUNCCandidate Condition="'$(DevSite)'=='BlackOps'">$(NuGetRepoUNCBlackOps)\Teams\Common\</NuGetRepoUNCCandidate>
+					<NuGetRepoURLCandidate Condition="'$(DevSite)'=='BlackOps'">http://nuget-pre.photochannel.net/api/v2/</NuGetRepoURLCandidate>
+					<NuGetRepoURLCandidatePublish Condition="'$(DevSite)'=='BlackOps'">http://nuget-pre.photochannel.net</NuGetRepoURLCandidatePublish>
+				<!--***********-->
+				
+			<!--***********-->
+
+			<!-- External Repositories -->
+				<NuGetRepoURLMicrosoft>https://www.nuget.org/api/v2/curated-feeds/microsoftdotnet/</NuGetRepoURLMicrosoft>
+				<NuGetRepoURLNuGetORG Condition="'$(NuGetORG)' == 'true'">https://www.nuget.org/api/v2/</NuGetRepoURLNuGetORG>
+			<!--***********-->
+			<!-- Location Based properties are based on the Choose action below. -->
+		<!--*****************-->
+	</PropertyGroup>
+	
+	<ItemGroup> <!-- NuGet Settings -->
+		<NuGetPackageConfigs Include="$(MSBuildProjectDirectory)\**\packages.config" />
+	</ItemGroup>
+	
+	<PropertyGroup> <!-- nDepend Settings -->
+		<nDepend_Status>False</nDepend_Status>
+		<nDepend_Status Condition="Exists('C:\.BuildTools\PNI.BuildTools\NDepend\NDepend.Console.exe')">True</nDepend_Status>
+		<nDependApp Condition="Exists('C:\.BuildTools\PNI.BuildTools\NDepend\NDepend.Console.exe')">C:\.BuildTools\PNI.BuildTools\NDepend\NDepend.Console.exe</nDependApp>
+
+		<nDepend_Status Condition="Exists('C:\Users\svc_pniabm\Downloads\NDepend_6.0.0.8550_RC1\NDepend.Console.exe')">True</nDepend_Status>
+		<nDependApp Condition="Exists('C:\Users\svc_pniabm\Downloads\NDepend_6.0.0.8550_RC1\NDepend.Console.exe')">C:\Users\svc_pniabm\Downloads\NDepend_6.0.0.8550_RC1\NDepend.Console.exe</nDependApp>
+	</PropertyGroup>
+
+	<Import Project="Custom.targets" Condition="Exists('Custom.targets')"/>
+	
+	<PropertyGroup> <!-- Custom.targets Configuration -->
+		<CustomSLNInclude_Override Condition="'$(CustomSLNInclude)' != '*.sln'">True</CustomSLNInclude_Override>
+		<CustomSLNInclude_Override Condition="'$(CustomSLNInclude)' == '*.sln'">False</CustomSLNInclude_Override>
+		<CustomSLNInclude_Override Condition="'$(CustomSLNInclude)' == ''">False</CustomSLNInclude_Override>
+		<CustomSLNExlcude_Override Condition="'$(CustomSLNExclude)' != ''">True</CustomSLNExlcude_Override>
+		<CustomSLNExlcude_Override Condition="'$(CustomSLNExclude)' == ''">False</CustomSLNExlcude_Override>
+	</PropertyGroup>
+		
+	<ItemGroup> <!-- Solution Configuration -->
+		<!-- Note, this is assuming there is only one solution file alongside the project.targets -->
+		<SolutionFiles Include="$(CustomSLNInclude)" Exclude="$(CustomSLNExclude)" Condition="'$(CustomSLNInclude_Override)' == True"/>
+		<SolutionFiles Include=".\**\*.sln" Exclude="$(CustomSLNExclude)" Condition="'$(SolutionSub)' == 'true' AND '$(CustomSLNInclude_Override)' == False"/>
+		<SolutionFiles Include="*.sln" Exclude="$(CustomSLNExclude)" Condition="'$(SolutionSub)' != 'true' AND '$(CustomSLNInclude_Override)' == False"/>
+		<SolutionRoot Include="."/>
+		
+	</ItemGroup>
+	
+	<Choose> <!-- NuGet Repositories -->
+		<When Condition="'$(DevSite)'=='Vancouver'">
+			<!-- Repositories: Vancouver -->
+			<PropertyGroup>
+				<NuGetRepo3rdparty>$(NuGetRepoUNCVancouver)\3rdparty\</NuGetRepo3rdparty>
+				<!--<NuGetRepoOfficial>$(NuGetRepoUNCVancouver)\official\$(configuration)\</NuGetRepoOfficial>-->
+				<NuGetRepoOfficial>$(NuGetRepoUNCVancouver)\official\Release\</NuGetRepoOfficial>
+				<NuGetRepoCandidate>$(NuGetRepoUNCVancouver)\teams\common\</NuGetRepoCandidate>
+			</PropertyGroup>
+			<!--***********-->
+		</When>
+		<When Condition="'$(DevSite)'=='Austin'">
+			<!-- Repositories: Austin -->
+			<PropertyGroup>
+				<NuGetRepo3rdparty>$(NuGetRepoUNCAustin)\3rdparty\</NuGetRepo3rdparty>
+				<!--<NuGetRepoOfficial>$(NuGetRepoUNCAustin)\official\$(configuration)\</NuGetRepoOfficial>-->
+				<NuGetRepoOfficial>$(NuGetRepoUNCAustin)\official\Release\</NuGetRepoOfficial>
+				<NuGetRepoCandidate>$(NuGetRepoUNCAustin)\teams\common\</NuGetRepoCandidate>
+			</PropertyGroup>
+			<!--***********-->
+		</When>
+		<When Condition="'$(DevSite)'=='Offline'">
+			<!-- Repositories: Offline (Local) -->
+			<PropertyGroup>
+				<NuGetRepo3rdparty>$(NuGetRepoLocal)\3rdparty\</NuGetRepo3rdparty>
+				<!--<NuGetRepoOfficial>$(NuGetRepoLocal)\$(configuration)\</NuGetRepoOfficial>-->
+				<NuGetRepoOfficial>$(NuGetRepoLocal)\official\Release\</NuGetRepoOfficial>
+				<NuGetRepoCandidate>$(NuGetRepoLocal)\teams\common\</NuGetRepoCandidate>
+			</PropertyGroup>
+			<!--***********-->
+		</When>
+		<When Condition="'$(DevSite)'=='Web'">
+			<!-- Repositories: Offline (Local) -->
+			<PropertyGroup>
+				<NuGetRepo3rdparty>$(NuGetRepoURL3rdParty)</NuGetRepo3rdparty>
+				<NuGetRepoOfficial>$(NuGetRepoURLOfficial)</NuGetRepoOfficial>
+				<NuGetRepoCandidate>$(NuGetRepoURLCandidate)</NuGetRepoCandidate>
+			</PropertyGroup>
+			<!--***********-->
+		</When>
+		<When Condition="'$(DevSite)'=='Cloud'">
+			<!-- Repositories: Offline (Local) -->
+			<PropertyGroup>
+				<NuGetRepo3rdparty>$(NuGetRepoURLCloud3rdParty)</NuGetRepo3rdparty>
+				<NuGetRepoOfficial>$(NuGetRepoURLCloudOfficialPublish)</NuGetRepoOfficial>
+				<NuGetRepoCandidate>$(NuGetRepoURLCloudCandidatePublish)</NuGetRepoCandidate>
+			</PropertyGroup>
+			<!--***********-->
+		</When>
+		<When Condition="'$(DevSite)'=='WebArchive'">
+			<!-- Repositories: Offline (Local) -->
+			<PropertyGroup>
+				<NuGetRepo3rdparty>$(NuGetRepoURLVancouver)/3rdParty/nuget/</NuGetRepo3rdparty>
+				<!--<NuGetRepoOfficial>$(NuGetRepoURLVancouver)/Official/$(configuration)/nuget/</NuGetRepoOfficial>-->
+				<NuGetRepoOfficial>$(NuGetRepoURLVancouver)/Official/Release/nuget/</NuGetRepoOfficial>
+				<NuGetRepoCandidate>$(NuGetRepoURLVancouver)/Teams/Common/nuget/</NuGetRepoCandidate>
+			</PropertyGroup>
+			<!--***********-->
+		</When>
+		<When Condition="'$(DevSite)'=='BlackOps'">
+			<!-- Repositories: BlackOps -->
+			<PropertyGroup>
+				<NuGetRepo3rdparty>$(NuGetRepoURLBlackOps)/3rdParty/</NuGetRepo3rdparty>
+				<!--<NuGetRepoOfficial>$(NuGetRepoURLVancouver)/Official/$(configuration)/nuget/</NuGetRepoOfficial>-->
+				<NuGetRepoOfficial>$(NuGetRepoURLBlackOps)/Official/Release/</NuGetRepoOfficial>
+				<NuGetRepoCandidate>$(NuGetRepoURLBlackOps)/Teams/Common/</NuGetRepoCandidate>
+			</PropertyGroup>
+			<!--***********-->
+		</When>
+		<When Condition="'$(DevSite)'=='BLANK'">
+			<!-- Repositories: Blank (Test) -->
+			<PropertyGroup>
+				<NuGetRepo3rdparty></NuGetRepo3rdparty>
+				<!--<NuGetRepoOfficial></NuGetRepoOfficial>-->
+				<NuGetRepoOfficial></NuGetRepoOfficial>
+				<NuGetRepoCandidate></NuGetRepoCandidate>
+			</PropertyGroup>
+			<!--***********-->
+		</When>
+		<Otherwise>
+			<!-- Repositories: Default (Vancouver - Web) -->
+			<PropertyGroup>
+				<NuGetRepo3rdparty>$(NuGetRepoURL3rdParty)</NuGetRepo3rdparty>
+				<NuGetRepoOfficial>$(NuGetRepoURLOfficial)</NuGetRepoOfficial>
+				<NuGetRepoCandidate>$(NuGetRepoURLCandidate)</NuGetRepoCandidate>
+			</PropertyGroup>
+			<!--***********-->
+		</Otherwise>
+	</Choose>
+
+	<!-- MSBuild Community Tasks -->
+		<Import Project=".Utilities\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" 
+				Condition="Exists('.Utilities\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets')"/>
+		<Import Project=".Utilities\$(MSBuildCommunityTasks_Package).$(MSBuildCommunityTasks_Version)\MSBuild.Community.Tasks.Targets" 
+				Condition="Exists('.Utilities\$(MSBuildCommunityTasks_Package).$(MSBuildCommunityTasks_Version)\MSBuild.Community.Tasks.Targets')"/>
+		<Import Project="$(BuildToolsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" 
+				Condition="!Exists('.Utilities\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets') AND Exists('$(BuildToolsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets')"/>
+			<PropertyGroup>
+				<MSBuildCommunityTasks_Status>False</MSBuildCommunityTasks_Status>
+				<MSBuildCommunityTasks_Status Condition="Exists('.Utilities\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets')">True</MSBuildCommunityTasks_Status>
+				<MSBuildCommunityTasks_Status Condition="Exists('$(BuildToolsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets')">True</MSBuildCommunityTasks_Status>
+			</PropertyGroup>
+
+		<UsingTask AssemblyFile="$(MSBuildCommunityTasksLib)" 
+				   TaskName="MSBuild.Community.Tasks.RegexMatch" 
+				   Condition="$(MSBuildCommunityTasks_Status) == True"/>
+
+		<UsingTask AssemblyFile="$(MSBuildCommunityTasksLib)" 
+				   TaskName="MSBuild.Community.Tasks.RegexReplace" 
+				   Condition="$(MSBuildCommunityTasks_Status) == True" />
+	<!-- *********************** -->
+
+	<!-- MSBuild Extension Pack -->
+		<Import Project=".Utilities\MSBuildExtensionPack\MSBuild.ExtensionPack.tasks" 
+				Condition="Exists('.Utilities\MSBuildExtensionPack\MSBuild.ExtensionPack.tasks')"/>
+		<Import Project=".Utilities\$(MSBuildExtensionPack_Package).$(MSBuildExtensionPack_Version)\MSBuild.ExtensionPack.tasks" 
+				Condition="Exists('.Utilities\$(MSBuildExtensionPack_Package).$(MSBuildExtensionPack_Version)\MSBuild.ExtensionPack.tasks')"/>
+		<Import Project="$(BuildToolsPath)\MSBuildExtensionPack\MSBuild.ExtensionPack.tasks" 
+				Condition="!Exists('.Utilities\MSBuildExtensionPack\MSBuild.ExtensionPack.tasks') AND Exists('$(BuildToolsPath)\MSBuildExtensionPack\MSBuild.ExtensionPack.tasks')"/>
+			<PropertyGroup>
+				<MSBuildExtensionPack_Status>False</MSBuildExtensionPack_Status>
+				<MSBuildExtensionPack_Status Condition="Exists('.Utilities\MSBuildExtensionPack\MSBuild.ExtensionPack.tasks')">True</MSBuildExtensionPack_Status>
+				<MSBuildExtensionPack_Status Condition="Exists('$(BuildToolsPath)\MSBuildExtensionPack\MSBuild.ExtensionPack.tasks')">True</MSBuildExtensionPack_Status>
+			</PropertyGroup>
+	<!-- ********************** -->
+	
+	<!-- Index.targets -->
+	<PropertyGroup>
+			<IndexFullPath Condition="Exists('.Utilities\MSBuildCustom\Index.targets')">$(MSBuildProjectDirectory)\.Utilities\MSBuildCustom</IndexFullPath>
+			<IndexFullPath Condition="Exists('$(SkyNetPath)\Index.targets') AND !Exists('.Utilities\MSBuildCustom\Index.targets')">$(SkyNetPath)</IndexFullPath>
+	</PropertyGroup>
+	<Import Project=".Utilities\MSBuildCustom\Index.targets" 
+			Condition="Exists('.Utilities\MSBuildCustom\Index.targets')"/>
+	<Import Project="$(SkyNetPath)\Index.targets" 
+			Condition="Exists('$(SkyNetPath)\Index.targets') AND !Exists('.Utilities\MSBuildCustom\Index.targets')"/>
+	<!-- ********************** -->
+	
+	<UsingTask TaskName="TransformXml" AssemblyFile="$(VS120DevWeb)" />
+		<PropertyGroup>
+			<MSBuildDevWeb_Status>False</MSBuildDevWeb_Status>
+			<MSBuildDevWeb_Status Condition="Exists('$(VS120DevWeb)')">True</MSBuildDevWeb_Status>
+		</PropertyGroup>
+
+	<Target Name="DebugProject">
+		<Message Text="-------------------------------------------------------------------" />
+		<Message Text="Debug: Project.targets" />
+		<Message Text="-------------------------------------------------------------------" />
+		<Message Text="NuSpec Override: $(NuSpecOverride)" />
+		<Message Text="NuSpec Override Status: $(NuSpecOverrideStatus)" />
+		<Message Text=" "/>
+		<Message Text="NuGet Local Repository: $(NuGetRepoLocal)" />
+		<Message Text=" "/>
+		<Message Text="Build Tools Path: $(BuildToolsPath)"/>
+		<Message Text=" "/>
+		<Message Text="TransformXml: $(VS120DevWeb)"/>
+		<Message Text=" "/>
+		<Message Text="Extension Path: $(MSBuildExtensionsPath)"/>
+		<Message Text=" "/>
+		<Message Text="TeamCity Activation: $(TeamCityActivation_TMP)"/>
+		<Message Text=" "/>
+		<Message Text="Build Artifacts: $(BuildArtifacts)"/>
+		<Message Text=" "/>
+		<Message Text="OctoPack Publish Path: $(OctoPackPublishPath)"/>
+		<Message Text=" "/>
+		<Message Text="Custom Compile All: $(CustomCompile)"/>
+		<Message Text=" "/>
+		<Message Text="Path: $(NuGetRepoUNCCandidate)"/>
+		<Message Text="Path TrimEnd: $(NuGetRepoUNCCandidate.TrimEnd('\'))"/>
+		<Message Text=" "/>
+		<Message Text="Solution Files: @(SolutionFiles)"/>
+		<Message Text=" "/>
+		<Message Text="Custom SLN Include: $(CustomSLNInclude)"/>
+		<Message Text="Custom SLN Include (Status): $(CustomSLNInclude_Override)"/>
+		<Message Text="Custom SLN Exclude: $(CustomSLNExclude)"/>
+		<Message Text="Custom SLN Exclude (Status): $(CustomSLNExlcude_Override)"/>
+		<Message Text="-------------------------------------------------------------------" />
+	</Target>
+
+	<Target Name="DebugProjectMicrosoft">
+		<Message Text="-------------------------------------------------------------------" />
+		<Message Text="Debug: Project.targets with Microsoft settings" />
+		<Message Text="-------------------------------------------------------------------" />
+		<Message Text=" "/>
+		<Message Text="Visual Studio 2008 Developer Command Line: $(VS90DevCmd)"/>
+		<Message Text="Visual Studio 2010 Developer Command Line: $(VS100DevCmd)"/>
+		<Message Text="Visual Studio 2012 Developer Command Line: $(VS110DevCmd)"/>
+		<Message Text="Visual Studio 2013 Developer Command Line: $(VS120DevCmd)"/>
+		<Message Text="-------------------------------------------------------------------" />
+	</Target>
+		
+	<Target Name="Boot">
+		<Message Text="-------------------------------------------------------------------" />
+		<Message Text="Config Info" />
+		<Message Text="-------------------------------------------------------------------" />
+		<Message Text="MSBuild Extension location: $(MSBuildExtensionsPath)" />
+		<Message Text="-------------------------------------------------------------------" />
+		
+		<CallTarget Targets="ABS_InfoCurrent"/>
+		
+	</Target>
+
+	<Target Name="Info">
+		<Message Text="-------------------------------------------------------------------" />
+		<Message Text="Build Targets: $(MSBuildProjectDirectory)" />
+		<Message Text="-------------------------------------------------------------------" />
+		<Message Text="msbuild project.targets /t:Compile" />
+		<Message Text="	Supported parameters for Compile:" />
+		<Message Text="		/p:Configuration=Release|Debug" />
+		<Message Text="		/p:Platform='Any CPU'|x64" />
+		<Message Text="		/p:RunOctoPack=True|False" />
+		<Message Text=" " />
+		<Message Text="msbuild project.targets /t:Package" />
+		<Message Text=" " />
+		<Message Text="	Supported parameters for Package:" />
+		<Message Text="		/p:Configuration=Release" />
+		<Message Text="		/p:NuSpecOverride='Nuspec File Name'" />
+		<Message Text=" " />
+		<Message Text="msbuild project.targets /t:Publish3rdParty" />
+		<Message Text="msbuild project.targets /t:PublishCandidate" />
+		<Message Text="msbuild project.targets /t:PublishLocal" />
+		<Message Text=" " />
+		<Message Text="msbuild project.targets /t:TransformWebConfig " />
+		<Message Text=" " />
+		<Message Text="	Required parameters for TranformWebConfig:" />
+		<Message Text="		/p:WebConfigSource='Web.config Source File'" />
+		<Message Text="		/p:WebConfigTransform='Web.config Transform File'" />
+		<Message Text="		/p:WebConfigTarget='Web.config Target File'" />
+		<Message Text="		/p:WebConfigProjectName='Project Name to Transform'" />
+		<Message Text=" " />
+		<Message Text="	Sample: msbuild project.targets /t:TransformWebConfig /p:WebConfigSource=Web.config /p:WebConfigTransform=Web.Production.config /p:WebConfigTarget=Web.Prod.config "/>
+		<Message Text=" " />
+		<Message Text="msbuild project.targets /t:PackageProjectWeb" />
+		<Message Text=" " />
+		<Message Text="	Required parameters for PackageProjectWeb:" />
+		<Message Text="		/p:PackageProjectName=WebProject1 " />
+		<Message Text=" " />
+		<Message Text="msbuild project.targets /t:UnitTest" />
+		<Message Text=" " />
+		<Message Text="	Supported parameters for Package:" />
+		<Message Text="		/p:TestIgnore=True/False" />
+		<Message Text=" " />
+		<Message Text="TestIgnore will ignore will Continue on Error or Fail out.  Default is True so it will just continue to the next project." />
+		<Message Text=" " />
+		<Message Text="msbuild project.targets /t:DisableNuGetConfig /p:Disable=teams" />
+		<Message Text="		This will disable the nuget package repository for 'teams' and can be applied to any repository." />
+		<Message Text=" " />
+		<Message Text="msbuild project.targets /t:InstallNPM " />
+		<Message Text=" " />
+		<Message Text="msbuild project.targets /t:GRUNT /p:GruntAction=dist " />
+		<Message Text=" 	When running the grunt build the InstallNPM is ran as a precursor to the actual grunt action." />
+		<Message Text=" " />
+		<Message Text="msbuild project.targets /t:GetVersionNumberFromFile /p:VersionFileType=.NET|JSON " />
+		<Message Text=" " />
+		<Message Text=" " />
+		
+		<Message Text="-------------------------------------------------------------------" />
+	</Target>
+	
+	<Target Name="BuildPreReq">
+		<!-- 2015-03-26: GS - Removed: DependsOnTargets="NuGetSettings" -->
+		<PropertyGroup>
+			<UtilitiesPath>%(SolutionRoot.FullPath)\.Utilities</UtilitiesPath>
+		</PropertyGroup>
+		
+		<Message Text="BuildPreReq Debug: Package Name: $(PackageName)" Condition='$(DebugMsg) == True'/> <!-- Debug -->
+		
+		<!-- MSBuild Community Tasks -->
+		<PropertyGroup>
+			<PackageName_BAK>$(PackageName)</PackageName_BAK>
+			<PackageName>$(MSBuildCommunityTasks_Package)</PackageName>
+			<PackageVersion>$(MSBuildCommunityTasks_Version)</PackageVersion>
+		</PropertyGroup>
+		<Message Text="BuildPreReq Debug: Package Name: $(PackageName)" Condition='$(DebugMsg) == True'/> <!-- Debug -->
+		<Message Text="BuildPreReq Debug: Package Name Backup: $(PackageName_BAK)" Condition='$(DebugMsg) == True'/> <!-- Debug -->
+		<Message Text="MSBuild Community Tasks Status: $(MSBuildCommunityTasks_Status)" Condition="'$(DebugMsg)' == 'true'"/> <!-- Debug -->
+		
+		<Exec 
+			Command="&quot;$(NuGet)&quot; install $(PackageName) -version $(PackageVersion) -o &quot;$(UtilitiesPath)&quot; -ConfigFile &quot;$(NuGetConfig)&quot;" 
+			Condition="!Exists('.Utilities\$(PackageName).$(PackageVersion)\MSBuild.Community.Tasks.Targets') AND $(MSBuildCommunityTasks_Status) == 'false' AND $(NuGet_Status) == 'true'"
+		/>
+		<PropertyGroup>
+			<PackageName>$(PackageName_BAK)</PackageName>
+			<PackageName_BAK></PackageName_BAK>
+		</PropertyGroup>
+		<Message Text="BuildPreReq Debug: PackageName: $(PackageName)" Condition='$(DebugMsg) == True'/> <!-- Debug -->
+		
+		<!-- MSBuild Extension Pack -->
+		<PropertyGroup>
+			<PackageName_BAK>$(PackageName)</PackageName_BAK>
+			<PackageName>$(MSBuildExtensionPack_Package)</PackageName>
+			<PackageVersion>$(MSBuildExtensionPack_Version)</PackageVersion>
+		</PropertyGroup>
+		<Message Text="BuildPreReq Debug: Package Name: $(PackageName)" Condition='$(DebugMsg) == True'/> <!-- Debug -->
+		<Message Text="BuildPreReq Debug: Package Name Backup: $(PackageName_BAK)" Condition='$(DebugMsg) == True'/> <!-- Debug -->
+		<Message Text="MSBuild Extension Pack Status: $(MSBuildExtensionPack_Status)" Condition="'$(DebugMsg)' == 'true'"/> <!-- Debug -->
+		
+		<Exec 
+			Command="&quot;$(NuGet)&quot; install $(PackageName) -version $(PackageVersion) -o &quot;$(UtilitiesPath)&quot; -ConfigFile &quot;$(NuGetConfig)&quot;" 
+			Condition="!Exists('.Utilities\$(PackageName).$(PackageVersion)\MSBuild.ExtensionPack.tasks') AND $(MSBuildExtensionPack_Status) == 'false' AND $(NuGet_Status) == 'true'"
+		/>
+		<PropertyGroup>
+			<PackageName>$(PackageName_BAK)</PackageName>
+			<PackageName_BAK></PackageName_BAK>
+		</PropertyGroup>
+		<Message Text="BuildPreReq Debug: PackageName: $(PackageName)" Condition='$(DebugMsg) == True'/> <!-- Debug -->
+	</Target>
+	
+	<Target Name="CleanNuGetPackages" Condition="'$(CleanNuGet)' == 'true'" >
+		<PropertyGroup>
+			<NuGetFolder>%(SolutionRoot.FullPath)\packages</NuGetFolder>
+		</PropertyGroup>
+		<RemoveDir Directories="$(NuGetFolder)" />
+	</Target>
+
+	<Target Name="ClearPackageCache" Condition="'$(CleanNuGet)' == 'true'" >
+		<PropertyGroup>
+			<PackageCacheFolder>$(LOCALAPPDATA)\NuGet\Cache</PackageCacheFolder>
+		</PropertyGroup>
+		<MSBuild.ExtensionPack.FileSystem.Folder TaskAction="RemoveContent" Path="$(PackageCacheFolder)" Condition="Exists('$(PackageCacheFolder)')"/>
+	</Target>
+
+	<Target Name="NuGetSettings">
+		<PropertyGroup>
+		<!-- NuGet Settings -->
+			<NuGetPath>%(SolutionRoot.FullPath)\.nuget</NuGetPath>
+			<NuGet>$(NuGetPath)\nuget.exe</NuGet>
+			<NuGetConfig>$(NuGetPath)\nuget.config</NuGetConfig>
+			<NuGetOutputFolder>%(SolutionRoot.FullPath)\packages</NuGetOutputFolder>
+			<NuGet_Status Condition="Exists('$(NuGet)')">true</NuGet_Status>
+			<NuGet_Status Condition="!Exists('$(NuGet)')">false</NuGet_Status>
+		<!--*****************-->
+		</PropertyGroup>
+		
+		<Message Text="NuGet_Status: $(NuGet_Status)"
+				 Condition="'$(DebugMsg)' == 'true'"/> <!-- Debug -->
+		
+		<Warning  Text="Nuget.exe was not found."
+				  Condition="'$(NuGet_Status)' == 'false'"/>
+		
+		<Message Text="SetEnvPath_Status: $(SetEnvPath_Status)"
+			  Condition="'$(DebugMsg)' == 'true'"/> <!-- Debug -->
+		<Message Text="SetEnvPath: $(SetEnvPath)"
+			  Condition="'$(DebugMsg)' == 'true'"/> <!-- Debug -->
+		
+		<SetEnvVariable Name="EnablePackageRestore" 
+						Value="true" 
+						Condition="'$(SetEnvPath_Status)' == 'true'"/>
+			<Exec Command="Set EnablePackageRestore"
+				  Condition="'$(DebugMsg)' == 'true'"
+				  ContinueOnError="True"/> <!-- Debug -->
+		
+		<SetEnvVariable Name="EnableNuGetPackageRestore" 
+						Value="true" 
+						Condition="'$(SetEnvPath_Status)' == 'true'"/>
+			<Exec Command="Set EnableNuGetPackageRestore"
+				  Condition="'$(DebugMsg)' == 'true'"
+				  ContinueOnError="True"/> <!-- Debug -->
+	</Target>
+		
+	<Target Name="InstallNuGetPackages" BeforeTargets="MSCompile" DependsOnTargets="NuGetSettings;CleanNuGetPackages;ClearPackageCache" Condition="'$(InstallNuGet)' == 'true'" >
+		<PropertyGroup>
+			<ErrorCode>0</ErrorCode>
+		</PropertyGroup>
+
+		<Message Text="Package Config: %(NuGetPackageConfigs.FullPath)" />
+		<Exec 
+			Command="$(NuGet) install &quot;%(NuGetPackageConfigs.FullPath)&quot; -o $(NuGetOutputFolder) -ConfigFile $(NuGetConfig)" 
+			Condition="Exists('%(NuGetPackageConfigs.FullPath)')"
+			ContinueOnError="True">
+			<Output TaskParameter="ExitCode" PropertyName="ErrorCode"/>
+		</Exec>
+		<!--<Message Text="The exit code is $(ErrorCode)"/>-->
+		<!--<Error Text="Error while installing NuGet packages." Condition="'$(ErrorCode)' > '0'" />
+		<OnError ExecuteTargets="InstallNuGetPackagesRetry"/>-->
+		<CallTarget Targets="InstallNuGetPackagesRetry"  Condition="'$(ErrorCode)' > '0'"/>
+		
+	</Target>
+
+	<Target Name="InstallNPM" BeforeTargets="GRUNT" Condition="'$(InstallNPM)' == 'true'" >
+		<!--
+			To Do's:	
+				2015-04-01: GS - Fix issue with TeamCity path not working correctly with NPM/Grunt.
+		-->
+		<PropertyGroup>
+			<ErrorCode>0</ErrorCode>
+			<NODEJSPath>C:\Program Files (x86)\nodejs\</NODEJSPath>
+			<NPM>$(APPDATA)\npm</NPM>
+		</PropertyGroup>
+
+		<SetEnvVariable Name="Path" 
+						Value="$(Path);$(NODEJSPath);$(NPM)" />
+			<Exec Command="Set Path"/>
+
+		<Message Text="Package Config: package.json" />
+
+		<Exec 
+			Command="NPM install" 
+			Condition="Exists('package.json')"
+			ContinueOnError="True">
+			<Output TaskParameter="ExitCode" PropertyName="ErrorCode"/>
+		</Exec>
+		<!--<Message Text="The exit code is $(ErrorCode)"/>-->
+		<!--<Error Text="Error while installing NuGet packages." Condition="'$(ErrorCode)' > '0'" />
+		<OnError ExecuteTargets="InstallNuGetPackagesRetry"/>-->
+		<!--<CallTarget Targets="InstallNPMPackagesRetry"  Condition="'$(ErrorCode)' > '0'"/>-->
+		
+	</Target>
+		
+	<Target Name="InstallNuGetPackagesRetry">
+		<!-- Retry Install -->
+		<Message Text=" "/>
+		<Message Text="--- Retry NuGet Package Install ---" Importance="High"/>
+		<Message Text=" "/>
+		<Exec 
+			Command="$(NuGet) install &quot;%(NuGetPackageConfigs.FullPath)&quot; -o $(NuGetOutputFolder) -ConfigFile $(NuGetConfig)" 
+			Condition="Exists('%(NuGetPackageConfigs.FullPath)')"
+			ContinueOnError="False">
+			<Output TaskParameter="ExitCode" PropertyName="ErrorCode"/>
+		</Exec>
+	</Target>
+	
+	<Target Name="UpdateNuGetEXE" BeforeTargets="InstallNuGetPackages" DependsOnTargets="NuGetSettings" Condition="'$(InstallNuGet)' == 'true'">
+		<Exec Command="$(NuGet) update -self" 
+			  ContinueOnError="WarnAndContinue"/>
+	</Target>
+	
+	<Target Name="Build">
+		<CallTarget Targets="Compile"/>
+	</Target>
+	
+	<Target Name="Compile">
+		<!-- Call Standard MS Build Compile if no Custom Compile is ran. -->
+		<MSBuild Projects="$(MSBuildProjectFullPath)" 
+				 Targets="MSCompile" 
+				 Condition="'$(CustomCompile)' == 'false' OR '$(CustomCompile)' == ''" />
+	
+		<!-- Hook to run Custom Compile -->
+		<MSBuild Projects="$(MSBuildProjectFullPath)" 
+				 Targets="CustomCompile" 
+				 Condition="'$(CustomCompile)' == 'true'" />
+	</Target>
+
+	<Target Name="MSCompile" DependsOnTargets="Boot;OverRideVS">
+		<PropertyGroup>
+			<RunOctoPack Condition="'$(RunOctoPack)' == 'true'">true</RunOctoPack>
+		</PropertyGroup>
+
+		<Message Text="Solution Files: @(SolutionFiles)"
+			 Condition="'$(DebugMsg)' == 'true'"/> <!-- Debug -->
+
+		<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+				 Targets="InstallNuGetPackages" 
+				 Condition="'$(InstallNuGet)' == 'true'"
+				 Properties=""/>
+			 
+		<!-- Build with "Clean" when "CleanBuild" mode is true. -->
+		<MSBuild Projects="@(SolutionFiles)" 
+				 ContinueOnError="false" 
+				 Targets="Clean;Build" 
+				 Properties="Configuration=$(Configuration)"
+				 Condition="'$(CustomCompile)' != 'true' AND '$(CleanBuild)' == 'true'">
+			<Output ItemName="BuildOutput" TaskParameter="TargetOutputs"/>
+		</MSBuild>
+		
+		<!-- Build without "Clean" when "QuickBuild" mode is false. -->
+		<MSBuild Projects="@(SolutionFiles)" 
+				 ContinueOnError="false" 
+				 Targets="Build" 
+				 Properties="Configuration=$(Configuration)"
+				 Condition="'$(CustomCompile)' != 'true' AND '$(CleanBuild)' == 'false'">
+			<Output ItemName="BuildOutput" TaskParameter="TargetOutputs"/>
+		</MSBuild>
+	</Target>
+	
+	<Target Name="GRUNT" DependsOnTargets="Boot" >
+		<!--
+			To Do's:	
+				2015-04-01: GS - Fix issue with TeamCity path not working correctly with NPM/Grunt.
+		-->
+		<PropertyGroup>
+			<ErrorCode>0</ErrorCode>
+			<NODEJSPath>C:\Program Files (x86)\nodejs\</NODEJSPath>
+			<GruntPath>$(APPDATA)\npm</GruntPath>
+		</PropertyGroup>
+
+		<Exec Command="npm config get prefix">
+			<Output PropertyName="GruntPath" TaskParameter="ConsoleOutput" />
+		</Exec>
+		
+		<SetEnvVariable Name="Path" 
+						Value="$(Path);$(NODEJSPath);$(GruntPath)" />
+			<Exec Command="Set Path"/>
+		
+		<Exec 
+			Command="GRUNT $(GruntAction)" 
+			Condition="'$(GruntAction)' != ''">
+		</Exec>		
+	</Target>
+	
+	<Target Name="OverRideVS">
+		<!--<Message Text="DEBUG: $(VSVer)" Importance="Normal"/>
+		<Message Text="VS 12 $(VS120DevCmd)" Importance="Normal" Condition="'$(VSVer)'=='12'"/>-->
+		
+		<Exec Command='"$(VS90DevCmd)"' Condition="'$(VSVer)'=='9'"/>
+		<Exec Command='"$(VS100DevCmd)"' Condition="'$(VSVer)'=='10'"/>
+		<Exec Command='"$(VS110DevCmd)"' Condition="'$(VSVer)'=='11'"/>
+		<Exec Command='"$(VS120DevCmd)"' Condition="'$(VSVer)'=='12'"/>
+	</Target>
+
+	<Target Name="Publish" DependsOnTargets="NuGetPackageSettings">
+		<Message Text="Debug - Publish To: $(PublishTo)" 
+				 Condition="'$(DebugMsg)' == 'true'"/> <!-- Debug -->
+		
+		<Message Text="Debug - Publish Artifacts: $(PublishArtifacts)" 
+				 Condition="'$(DebugMsg)' == 'true'"/> <!-- Debug -->
+		
+		<Message Text="Debug - Build Type: $(BuildType)" 
+				 Condition="'$(DebugMsg)' == 'true'"/> <!-- Debug -->
+		
+		<Message Text="Debug - Project Name: $(ProjectName)" 
+				 Condition="'$(DebugMsg)' == 'true'"/> <!-- Debug -->
+
+		<PropertyGroup>
+			<PublishTo Condition="'$(PublishTo)' == '' AND $(PublishArtifacts) == ''">Candidate</PublishTo>
+		</PropertyGroup>
+		
+		<CallTarget Targets="Publish3rdParty" Condition="$(PublishTo) == '3rdParty'" />
+		<CallTarget Targets="PublishCandidate" Condition="$(PublishTo) == 'Candidate'" />
+		<CallTarget Targets="PublishOfficial" Condition="$(PublishTo) == 'Official'" />
+		<CallTarget Targets="PublishLocal" Condition="$(PublishTo) == 'Local'" />
+		<CallTarget Targets="PublishArtifacts" Condition="$(PublishArtifacts) == 'true'" />
+	</Target>
+
+	<Target Name="Publish3rdParty" DependsOnTargets="NuGetSettings;NuGetPackageSettings">
+		<PropertyGroup>
+			<NuGetPackageFolder Condition="'$(nugetTarget)' == ''">%(SolutionRoot.FullPath)\nupkg\$(Configuration)</NuGetPackageFolder>
+			<NuGetPackageFolder Condition="'$(nugetTarget)' != ''">$(nugetTarget)</NuGetPackageFolder>
+		</PropertyGroup>
+		
+		<PropertyGroup>
+			<NuGetServerApiKey Condition="'$(NuGetAPIKey)' ==''"></NuGetServerApiKey>
+			<NuGetServerApiKey Condition="'$(NuGetAPIKey)' !=''">$(NuGetAPIKey)</NuGetServerApiKey>
+		</PropertyGroup>
+		
+		<ItemGroup>
+			<LocalNupkg Include="$(NuGetPackageFolder.TrimEnd('\'))\*.nupkg"/>
+		</ItemGroup>
+		
+		<Message Text="NuSpec Package Folder: $(NuGetPackageFolder)"
+				 Condition="'$(DebugMsg)' == 'true'"/>
+
+		<Message Text="DEBUG: copy $(NuGetPackageFolder)\*.nupkg $(NuGetRepoUNC3rdParty)"
+				 Condition="'$(PublishType)' == 'Network' AND '$(DebugMsg)' == 'true'"/>
+				 
+		<Message Text="DEBUG: $(NuGet) Push %(LocalNupkg.Identity) -ApiKey $(NuGetServerApiKey) -Source $(NuGetRepoURL3rdPartyPublish)"
+				 Condition="'$(PublishType)' == 'Web' AND '$(NuGetServerApiKey)' != '' AND '$(DebugMsg)' == 'true'"/>
+				
+		<Message Text="DEBUG: $(NuGet) Push %(LocalNupkg.Identity) -ApiKey $(NuGetServerApiKey) -Source $(NuGetRepoURLCloud3rdPartyPublish)"
+				 Condition="'$(PublishType)' == 'Cloud' AND '$(NuGetServerApiKey)' != '' AND '$(DebugMsg)' == 'true'"/>
+
+		<Exec 
+			Command='copy $(NuGetPackageFolder)\*.nupkg $(NuGetRepoUNC3rdParty)'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+			Condition="'$(PublishType)' == 'Network'"
+		/>
+		
+		<Exec 
+			Command='$(NuGet) Push %(LocalNupkg.Identity) -ApiKey $(NuGetServerApiKey) -Source $(NuGetRepoURL3rdPartyPublish)'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+			Condition="'$(PublishType)' == 'Web' AND '$(NuGetServerApiKey)' != '' AND '%(LocalNupkg.Identity)' != ''"
+		/>
+		
+		<Exec 
+			Command='$(NuGet) Push %(LocalNupkg.Identity) -ApiKey $(NuGetServerApiKey) -Source $(NuGetRepoURLCloud3rdPartyPublish)'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+			Condition="'$(PublishType)' == 'Cloud' AND '$(NuGetServerApiKey)' != '' AND '%(LocalNupkg.Identity)' != ''"
+		/>
+		
+	</Target>
+
+	<Target Name="PublishCandidate" DependsOnTargets="NuGetSettings;NuGetPackageSettings">
+		<PropertyGroup>
+			<NuGetPackageFolder Condition="'$(nugetTarget)' == ''">%(SolutionRoot.FullPath)\nupkg\$(Configuration)</NuGetPackageFolder>
+			<NuGetPackageFolder Condition="'$(nugetTarget)' != ''">$(nugetTarget)</NuGetPackageFolder>
+		</PropertyGroup>
+		
+		<PropertyGroup>
+			<NuGetServerApiKey Condition="'$(NuGetAPIKey)' ==''"></NuGetServerApiKey>
+			<NuGetServerApiKey Condition="'$(NuGetAPIKey)' !=''">$(NuGetAPIKey)</NuGetServerApiKey>
+		</PropertyGroup>
+		
+		<ItemGroup>
+			<LocalNupkg Include="$(NuGetPackageFolder.TrimEnd('\'))\*.nupkg"/>
+		</ItemGroup>
+		
+		<Message Text="NuSpec Package Folder: $(NuGetPackageFolder)"
+				 Condition="'$(DebugMsg)' == 'true'"/>
+
+		<Message Text="DEBUG: Copy %(LocalNupkg.Identity) $(NuGetRepoUNCCandidate)"
+				 Condition="'$(PublishType)' == 'Network' AND '$(DebugMsg)' == 'true'"/>
+				 
+		<Message Text="DEBUG: $(NuGet) Push %(LocalNupkg.Identity) -ApiKey $(NuGetServerApiKey) -Source $(NuGetRepoURLCandidatePublish)"
+				 Condition="'$(PublishType)' == 'Web' AND '$(NuGetServerApiKey)' != '' AND '$(DebugMsg)' == 'true'"/>
+				
+		<Message Text="DEBUG: $(NuGet) Push %(LocalNupkg.Identity) -ApiKey $(NuGetServerApiKey) -Source $(NuGetRepoURLCloudCandidatePublish)"
+				 Condition="'$(PublishType)' == 'Cloud' AND '$(NuGetServerApiKey)' != '' AND '$(DebugMsg)' == 'true'"/>
+		
+		<!-- 2015-01-26: GS - Replaced "$(NuGetPackageFolder)\*.nupkg" with "%(LocalNupkg.Identity)" -->
+		<Exec 
+			Command='Copy %(LocalNupkg.Identity) $(NuGetRepoUNCCandidate)'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+			Condition="'$(PublishType)' == 'Network' AND '%(LocalNupkg.Identity)' != ''"
+		/>
+		
+		<Exec 
+			Command='$(NuGet) Push %(LocalNupkg.Identity) -ApiKey $(NuGetServerApiKey) -Source $(NuGetRepoURLCandidatePublish)'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+			Condition="'$(PublishType)' == 'Web' AND '$(NuGetServerApiKey)' != '' AND '%(LocalNupkg.Identity)' != ''"
+		/>
+
+		<Exec 
+			Command='$(NuGet) Push %(LocalNupkg.Identity) -ApiKey $(NuGetServerApiKey) -Source $(NuGetRepoURLCloudCandidatePublish)'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+			Condition="'$(PublishType)' == 'Cloud' AND '$(NuGetServerApiKey)' != '' AND '%(LocalNupkg.Identity)' != ''"
+		/>
+	</Target>
+
+	<Target Name="PublishOfficial" DependsOnTargets="NuGetSettings;NuGetPackageSettings">
+		<PropertyGroup>
+			<NuGetPackageFolder Condition="'$(nugetTarget)' == ''">%(SolutionRoot.FullPath)\nupkg\$(Configuration)</NuGetPackageFolder>
+			<NuGetPackageFolder Condition="'$(nugetTarget)' != ''">$(nugetTarget)</NuGetPackageFolder>
+		</PropertyGroup>
+		
+		<PropertyGroup>
+			<NuGetServerApiKey Condition="'$(NuGetAPIKey)' ==''"></NuGetServerApiKey>
+			<NuGetServerApiKey Condition="'$(NuGetAPIKey)' !=''">$(NuGetAPIKey)</NuGetServerApiKey>
+		</PropertyGroup>
+		
+		<ItemGroup>
+			<LocalNupkg Include="$(NuGetPackageFolder.TrimEnd('\'))\*.nupkg"/>
+		</ItemGroup>
+		
+		<Message Text="NuSpec Package Folder: $(NuGetPackageFolder)"
+				 Condition="'$(DebugMsg)' == 'true'"/>
+
+		<Message Text="DEBUG: Copy %(LocalNupkg.Identity) $(NuGetRepoUNCOfficial)"
+				 Condition="'$(PublishType)' == 'Network' AND '$(DebugMsg)' == 'true'"/>
+				 
+		<Message Text="DEBUG: $(NuGet) Push %(LocalNupkg.Identity) -ApiKey $(NuGetServerApiKey) -Source $(NuGetRepoURLOfficialPublish)"
+				 Condition="'$(PublishType)' == 'Web' AND '$(NuGetServerApiKey)' != '' AND '$(DebugMsg)' == 'true'"/>
+				
+		<Message Text="DEBUG: $(NuGet) Push %(LocalNupkg.Identity) -ApiKey $(NuGetServerApiKey) -Source $(NuGetRepoURLOfficialPublish)"
+				 Condition="'$(PublishType)' == 'Cloud' AND '$(NuGetServerApiKey)' != '' AND '$(DebugMsg)' == 'true'"/>
+				 
+		<!-- 2015-01-26: GS - Replaced "$(NuGetPackageFolder)\*.nupkg" with "%(LocalNupkg.Identity)" -->
+		<Exec 
+			Command='Copy %(LocalNupkg.Identity) $(NuGetRepoUNCOfficial)'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+			Condition="'$(PublishType)' == 'Network' AND '%(LocalNupkg.Identity)' != ''"
+		/>
+		
+		<Exec 
+			Command='$(NuGet) Push %(LocalNupkg.Identity) -ApiKey $(NuGetServerApiKey) -Source $(NuGetRepoURLOfficialPublish)'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+			Condition="'$(PublishType)' == 'Web' AND '$(NuGetServerApiKey)' != '' AND '%(LocalNupkg.Identity)' != ''"
+		/>
+		
+		<Exec 
+			Command='$(NuGet) Push %(LocalNupkg.Identity) -ApiKey $(NuGetServerApiKey) -Source $(NuGetRepoURLOfficialPublish)'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+			Condition="'$(PublishType)' == 'Cloud' AND '$(NuGetServerApiKey)' != '' AND '%(LocalNupkg.Identity)' != ''"
+		/>
+
+	</Target>
+
+	<Target Name="PublishLocal" DependsOnTargets="NuGetPackageSettings">
+		<PropertyGroup>
+			<NuGetPackageFolder Condition="'$(nugetTarget)' == ''">%(SolutionRoot.FullPath)\nupkg\$(Configuration)</NuGetPackageFolder>
+			<NuGetPackageFolder Condition="'$(nugetTarget)' != ''">$(nugetTarget)</NuGetPackageFolder>
+		</PropertyGroup>
+		
+		<ItemGroup>
+			<LocalNupkg Include="$(NuGetPackageFolder.TrimEnd('\'))\*.nupkg"/>
+		</ItemGroup>
+		
+		<Message Text="NuSpec Package Folder: $(NuGetPackageFolder)"
+				 Condition="'$(DebugMsg)' == 'true'"/>
+
+		<Message Text="DEBUG: Copy %(LocalNupkg.Identity) $(NuGetRepoUNCOfficial)"
+				 Condition="'$(PublishType)' == 'Network' AND '$(DebugMsg)' == 'true'"/>
+		
+		<Exec 
+			Command='MD $(NuGetRepoLocal)\'
+			WorkingDirectory='$(NuGetPackageFolder)'
+			Condition="!Exists('$(NuGetRepoLocal)')"
+		/>
+		
+		<!-- 2015-01-26: GS - Replaced "$(NuGetPackageFolder)\*.nupkg" with "%(LocalNupkg.Identity)" -->
+		<Exec 
+			Command='Copy %(LocalNupkg.Identity) $(NuGetRepoLocal)'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+		/>
+	</Target>
+
+	<Target Name="PublishArtifacts" DependsOnTargets="NuGetPackageSettings;GetVersionNumberFromFile;Get-Date" >
+		<!-- Phased Out (2014-10-23): Condition="'$(BuildType)' == 'Official'" -->
+		<PropertyGroup>
+			<PublishArtifactsPathRemote>$(BuildArtifactsServerRemote)\TeamCity\$(BuildType)\$(ProjectName)\$(AssemblyFileVersion_Release)\$(AssemblyFileVersion_FULL)\</PublishArtifactsPathRemote>
+			<PublishArtifactsPathRemote Condition="'$(BuildType)' == 'Nightly'">$(BuildArtifactsServerRemote)\TeamCity\$(BuildType)\$(ISOYear)\$(ISOMonth)\$(ISODay)\$(ProjectName)\$(AssemblyFileVersion_Release)\$(AssemblyFileVersion_FULL)\</PublishArtifactsPathRemote>
+		</PropertyGroup>
+		
+		<Message Text="##teamcity[setParameter name='ReleaseRemoteDistribPath' value='$(PublishArtifactsPathRemote)']" 
+				 Condition="'$(TeamCityActivation_TMP)' == 'true'"
+		/>
+		
+		<Message Text="Publish Artifacts Folder: $(BuildArtifacts)" 
+				 Condition="'$(DebugMsg)' == 'true'"/>
+
+		<Message Text="XCopy /S /Y $(BuildArtifacts)\*.* '$(PublishArtifactsPathRemote)'"
+				 Condition="'$(DebugMsg)' == 'true'"/>
+				 
+		<Message Text="Remote Artifacts folder does not exist."
+				 Condition="!Exists('$(PublishArtifactsPathRemote)')"/>
+				 
+		<Exec 
+			Command='MD "$(PublishArtifactsPathRemote)"'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+			Condition="!Exists('$(PublishArtifactsPathRemote)')"
+		/>
+
+		<Message Text="Local Artifacts folder does not exist."
+				 Condition="!Exists('$(BuildArtifacts)')"/>
+		
+		<Exec 
+			Command='XCopy /S /Y $(BuildArtifacts)\*.* "$(PublishArtifactsPathRemote)"'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+			Condition="Exists('$(BuildArtifacts)')"
+		/>
+	</Target>
+
+	<Target Name="ReadNuspec">
+		<Message Text="Reading: Version" />
+		<XmlRead 
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(CurrentNuGet)"
+			XPath="nu:package/nu:metadata/nu:version">
+			<Output TaskParameter="Value" PropertyName="versionRead" />
+		</XmlRead>
+
+		<Message Text="Reading: Description" />
+		<XmlRead 
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(CurrentNuGet)"
+			XPath="nu:package/nu:metadata/nu:description">
+			<Output TaskParameter="Value" PropertyName="descriptionRead" />
+		</XmlRead>
+
+		<Message Text="Reading: Files Exclude" />
+		<XmlRead 
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(CurrentNuGet)"
+			XPath="nu:package/nu:files/nu:file[1]/@exclude">
+			<Output TaskParameter="Value" PropertyName="excludeRead" />
+		</XmlRead>
+	</Target>
+
+	<Target Name="UpdateNuspec" DependsOnTargets="ReadNuspec" >
+		<Message Text="-------------------------------------------------------------------" />
+		<Message Text="Update: Nuspec"/>
+		<Message Text="-------------------------------------------------------------------" />
+		<Message Text="Attrib: Remove Read-Only flag on $(CurrentNuGet)" />
+		<Exec 
+			Command='attrib -R $(CurrentNuGet)'
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+		/>
+
+		<MSBuild.ExtensionPack.Framework.TextString 
+				TaskAction="Compare" 
+				Comparison="Contains" 
+				String1="$(excludeRead)" 
+				String2="**\packages.config" 
+				IgnoreCase="true"
+				Condition="'$(excludeRead)' != ''">
+			<Output PropertyName="fileExcludeAbort" TaskParameter="Result"/>
+		</MSBuild.ExtensionPack.Framework.TextString>
+
+		<PropertyGroup>
+			<fileExcludeAbort Condition="'$(excludeRead)' == ''">false</fileExcludeAbort>
+		</PropertyGroup>
+
+		<Message Text="Updating: Files to Exclude" /><!--Template: **\packages.config -->
+		<XmlUpdate 
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(CurrentNuGet)"
+			XPath="nu:package/nu:files/nu:file[1]/@exclude"
+			Value="**\packages.config;$(excludeRead)"
+			Condition="'$(fileExcludeAbort)' == 'false'"
+		/>
+
+		<Message Text="Updating: Version Information" />
+			<!-- ********** Get Version from File ********** -->
+				<MSBuild 
+					Condition="'$(versionUpdate)' == ''"
+					Projects="$(MSBuildProjectFile)"
+					Targets="GetVersionNumberFromFile"
+				/>
+
+				<PropertyGroup>
+					<VersionFull Condition="'$(versionMajor)' != ''">$(versionMajor).$(versionMinor).$(versionPatch).$(versionBuild)</VersionFull>
+					<VersionUpdate Condition="'$(versionMajor)' != ''">$(versionMajor).$(versionMinor).$(versionPatch)</VersionUpdate>
+					<VersionBuild Condition="'$(versionMajor)' != ''">$(versionBuild)</VersionBuild>
+				</PropertyGroup>
+			<!-- ******************************************* -->
+
+			<Message Text="Version Read (Pre Update): $(versionRead)"/>
+			
+			<PropertyGroup>
+				<versionWrite Condition="'$(versionUpdate)' == ''">$(versionRead)</versionWrite>
+				<versionWrite Condition="'$(versionUpdate)' != ''">$(versionUpdate)</versionWrite>
+				<versionBuild Condition="'$(versionBuild)' == ''">1000</versionBuild>
+				<versionFull Condition="$([System.Text.RegularExpressions.Regex]::IsMatch($(versionWrite),(\d+)\.(\d+)\.(\d+)\.(\d+)))">$(versionWrite)</versionFull>
+				<versionFull Condition="'$(versionFull)' == ''">$(versionWrite).$(versionBuild)</versionFull>
+				<versionWrite Condition="'$(OctoPack)' == 'true'">$(versionFull)</versionWrite>
+				<!--<versionWrite Condition="'$(ExternalPack)' == 'true'">$(versionFull)</versionWrite>--> <!-- 2015-07-26: GS - Change to VersionWrite to keep with what is defined and not updated with VersionBuild -->
+				<versionWrite Condition="'$(ExternalPack)' == 'true'">$(versionWrite)</versionWrite>
+			</PropertyGroup>
+
+			<MSBuild.ExtensionPack.Framework.TextString 
+					TaskAction="Compare" 
+					Comparison="Contains" 
+					String1="$(versionRead)" 
+					String2="$version$" 
+					IgnoreCase="true" 
+					Condition="'$(ExternalPack)' != 'true'">
+				<Output PropertyName="versionUpdateAbort" TaskParameter="Result"/>
+			</MSBuild.ExtensionPack.Framework.TextString>
+
+			<Message Text="Version Full: $(versionFull)"/>
+			<Message Text="Updating version from  '$(versionRead)' to '$(versionWrite)'" />
+			<Message Text="Build version is set to: $(versionBuild)" />
+			<Message Text="Abort Version Update: $(versionUpdateAbort)"/>
+
+			<XmlUpdate 
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(CurrentNuGet)"
+				XPath="nu:package/nu:metadata/nu:version"
+				Value="$(versionWrite)"
+				Condition="'$(versionUpdateAbort)' == 'false'"
+			/>
+
+		<Message Text="Updating: Files Target Path (OctoPack)" />
+			<XmlUpdate 
+				Condition="'$(OctoPack)' == 'true'"			
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(CurrentNuGet)"
+				XPath="nu:package/nu:files/nu:file[1]/@target"
+				Value="" 
+			/>
+
+		<!--
+		<Message Text="Updating: Description" />
+			<PropertyGroup>
+				<versionFull Condition="'$(versionBuild)' == ''">$(versionWrite)</versionFull>
+				<versionFull Condition="'$(versionBuild)' != ''">$(versionWrite).$(versionBuild)</versionFull>
+			</PropertyGroup>
+			<XmlUpdate 
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(CurrentNuGet)"
+				XPath="nu:package/nu:metadata/nu:description"
+				Value="$(descriptionRead) v$(versionFull) ($(configuration))"
+			/>
+		-->
+
+		<!--
+		<Message Text="Updating: Files Source Path" />
+			<XmlUpdate
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(CurrentNuGet)"
+				XPath="nu:package/nu:files/nu:file[1]/@src"
+				Value="bin\$(configuration)\**\*"
+			/>
+		-->
+
+		<!--
+		<Message Text="Updating: Files Target Path (Template: lib\net35)" />
+			<XmlUpdate
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(CurrentNuGet)"
+				XPath="nu:package/nu:files/nu:file[1]/@target"
+				Value="Content"
+			/>
+		-->
+		<Message Text="-------------------------------------------------------------------" />
+	</Target>
+
+	<Target Name="PrepNuSpecINT" DependsOnTargets="Boot">
+		<Exec
+			Command='attrib -R $(CurrentNuGet)'
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+		/>
+
+		<Message Text="Prep: NuSpec Type" /><!--Template: Binary/Content/OctoPack -->
+			<XmlUpdate
+				Condition="'$(PrepNuSpec)' == 'binary'"
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(CurrentNuGet)"
+				XPath="nu:package/nu:files/nu:file[1]/@target"
+				Value="lib\net35"
+			/>
+			<XmlUpdate 
+				Condition="'$(PrepNuSpec)' == 'content'"
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(CurrentNuGet)"
+				XPath="nu:package/nu:files/nu:file[1]/@target"
+				Value="Content"
+			/>
+			<!-- ********** OCTOPACK ********** -->
+			<XmlUpdate
+				Condition="'$(PrepNuSpec)' == 'octopack'"
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(CurrentNuGet)"
+				XPath="nu:package/nu:files/nu:file[1]/@target"
+				Value="octopack"
+			/>
+			<!-- ****************************** -->
+	</Target>
+
+	<Target Name="PrepOutputLocal">
+		<Exec
+			Command='attrib -R /S nupkg/*'
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			Condition="'$(nugetTarget)' == ''"
+		/>
+
+		<Exec
+			Command='attrib -R /S $(nugetTarget)/*'
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			Condition="'$(nugetTarget)' != ''"
+		/>
+
+		<Exec
+			Command='rmdir /S /Q nupkg\"$(configuration)"'
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			Condition="'$(nugetTarget)' == ''"
+		/>
+
+		<Exec
+			Command='rmdir /S /Q $(nugetTarget)'
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			Condition="'$(nugetTarget)' != ''"
+		/>
+
+		<Exec
+			Command='md nupkg\"$(configuration)"'
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			Condition="'$(nugetTarget)' == ''"
+		/>
+
+		<Exec
+			Command="md $(nugetTarget)"
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			Condition="'$(nugetTarget)' != ''"
+		/>
+	</Target>	
+
+	<Target Name="PrepNuSpec">
+		<ItemGroup>
+			<nuspecFiles Include="*.nuspec"/>
+		</ItemGroup>
+
+		<MSBuild 
+			Projects="$(MSBuildProjectFile)"
+			Properties="CurrentNuGet=%(nuspecFiles.Identity)"
+			Targets="PrepNuSpecINT">
+		</MSBuild>
+	</Target>	
+
+	<Target Name="NuGetPackageSettings">
+		<!-- NuSpec Override will allow for setting a single NuSpec file name and overriding the bulk batch process. -->
+		<PropertyGroup>
+		<!-- NuGet Package Settings -->
+			<nuspecExtension>true</nuspecExtension>
+			<nuspecExtension Condition="$([System.Text.RegularExpressions.Regex]::IsMatch($(NuSpecOverride),((?i)(.nuspec))))">false</nuspecExtension>
+			<nugetTarget Condition="'$(NuGetTargetOverrideStatus)' == 'false'">$(BuildArtifacts)\nupkg\$(configuration)\</nugetTarget> <!-- Default -->
+			<!--<nugetTargetURL Condition="'$(NuGetTargetOverrideStatus)' == 'false'">$(CurrentRepoOfficial)</nugetTargetURL>--> <!-- Default -->
+			<nugetTarget Condition="'$(NuGetTargetOverrideStatus)' == 'true'">$(NuGetTargetOverride)\</nugetTarget> <!-- Override -->
+			<nugetTarget Condition="'$(NuGetTargetOverride)' == ''">$(BuildArtifacts)\nupkg\$(configuration)\</nugetTarget> <!-- Override if blank -->
+		<!--*****************-->
+		</PropertyGroup>
+		<Message Text="NuSpec Extension Required: $(nuspecExtension)"
+				 Condition="'$(DebugMsg)' == 'true'"/>
+	</Target>
+
+	<Target Name="GetVersionNumberFromFile">
+		<CallTarget Targets="GetVersionNumberFromFileDOTNET"  Condition="$(VersionFileType) == '' OR $(VersionFileType) == '.NET'"/>
+		<CallTarget Targets="GetVersionNumberFromFileJSON" Condition="$(VersionFileType) == 'JSON'" />
+	</Target>
+	
+	<Target Name="GetVersionNumberFromFileDOTNET" Condition="Exists('$(SemVerFile)')">
+		<ReadLinesFromFile File="$(SemVerFile)">
+			<Output TaskParameter="Lines" ItemName="IterationNumberFileContents"/>
+		</ReadLinesFromFile>
+
+		<RegexMatch Input="@(IterationNumberFileContents)" Expression="(AssemblyFileVersion)">
+			<Output ItemName="VersionNumberLineReturn" TaskParameter="Output"/>
+		</RegexMatch>
+
+		<RegexReplace 
+			Input="@(VersionNumberLineReturn)" 
+			Expression="\[assembly\: (AssemblyFileVersion)\(\&quot;(\d+)\.(\d+)\.(\d+)\.(\d+)\&quot;\)\]" 
+			Replacement="$2" 
+			Count="1">
+			<Output PropertyName="VersionMajor" TaskParameter="Output"/>
+		</RegexReplace>
+
+		<RegexReplace 
+			Input="@(VersionNumberLineReturn)" 
+			Expression="\[assembly\: (AssemblyFileVersion)\(\&quot;(\d+)\.(\d+)\.(\d+)\.(\d+)\&quot;\)\]" 
+			Replacement="$3" 
+			Count="1">
+			<Output PropertyName="VersionMinor" TaskParameter="Output"/>
+		</RegexReplace>
+
+		<RegexReplace 
+			Input="@(VersionNumberLineReturn)" 
+			Expression="\[assembly\: (AssemblyFileVersion)\(\&quot;(\d+)\.(\d+)\.(\d+)\.(\d+)\&quot;\)\]" 
+			Replacement="$4" 
+			Count="1">
+			<Output PropertyName="VersionPatch" TaskParameter="Output"/>
+		</RegexReplace>
+
+		<RegexReplace 
+			Input="@(VersionNumberLineReturn)" 
+			Expression="\[assembly\: (AssemblyFileVersion)\(\&quot;(\d+)\.(\d+)\.(\d+)\.(\d+)\&quot;\)\]" 
+			Replacement="$5" 
+			Count="1">
+			<Output PropertyName="VersionBuild" TaskParameter="Output"/>
+		</RegexReplace>
+
+		<Message Text="Version Major (MajorNumber): $(VersionMajor)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+		<Message Text="Version Minor (MinorNumber): $(VersionMinor)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+		<Message Text="Version Patch (ReleaseNumber): $(VersionPatch)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+		<Message Text="Version Build (RevisionNumber): $(VersionBuild)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+
+		<PropertyGroup>
+			<AssemblyFileVersion_FULL>$(VersionMajor).$(VersionMinor).$(VersionPatch).$(VersionBuild)</AssemblyFileVersion_FULL>
+			<AssemblyFileVersion_FULL_ISO>$(VersionMajor)_$(VersionMinor)_$(VersionPatch)_$(VersionBuild)</AssemblyFileVersion_FULL_ISO>
+			<AssemblyFileVersion_Release>$(VersionMajor).$(VersionMinor).$(VersionPatch)</AssemblyFileVersion_Release>
+			<AssemblyFileVersion_Release_ISO>$(VersionMajor)_$(VersionMinor)_$(VersionPatch)</AssemblyFileVersion_Release_ISO>
+		</PropertyGroup>
+		<Message Text="Current Version: $(AssemblyFileVersion_FULL)"/>
+		
+		<WriteLinesToFile
+			File="QuickVer.txt"
+			Lines="$(AssemblyFileVersion_FULL)"
+			Overwrite="true"
+			Encoding="Unicode"
+			Condition = '$(LogVersion)== True' />
+	</Target>
+
+	<Target Name="GetInfoFromFileDOTNET" Condition="Exists('$(SemVerFile)')">
+		<ReadLinesFromFile File="$(SemVerFile)">
+			<Output TaskParameter="Lines" ItemName="IterationNumberFileContents"/>
+		</ReadLinesFromFile>
+
+		<RegexMatch Input="@(IterationNumberFileContents)" Expression="(AssemblyCompany)">
+			<Output ItemName="VersionNumberLineReturn" TaskParameter="Output"/>
+		</RegexMatch>
+
+		<RegexReplace 
+			Input="@(VersionNumberLineReturn)" 
+			Expression="\[assembly\: (AssemblyCompany)\(\&quot;\&quot;\)\]" 
+			Replacement="$1" 
+			Count="1">
+			<Output PropertyName="Company" TaskParameter="Output"/>
+		</RegexReplace>
+		<Message Text="$(Company)"/>
+	</Target>
+	
+	<Target Name="BuildSpecXML" Condition='$(LogVersion)== True'  DependsOnTargets="GetVersionNumberFromFileDOTNET">
+		<PropertyGroup>
+			<BuildSpecFile>BuildSpecs_GEN.xml</BuildSpecFile>
+		</PropertyGroup>
+		<!--
+		<XmlUpdate 
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(BuildSpecFile)"
+			XPath="nu:Build/nu:Project/nu:Company"
+			Value="$(Company)"
+		/>
+		-->
+		<!--
+		<XmlUpdate 
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(BuildSpecFile)"
+			XPath="nu:Build/nu:Project/nu:Product"
+			Value="$(Product)"
+		/>-->
+		
+		<XmlUpdate 
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(BuildSpecFile)"
+			XPath="nu:Build/nu:Project/nu:VersionMajor"
+			Value="$(VersionMajor)"
+		/>
+		
+		<XmlUpdate 
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(BuildSpecFile)"
+			XPath="nu:Build/nu:Project/nu:VersionMinor"
+			Value="$(VersionMinor)"
+		/>
+		
+		<XmlUpdate 
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(BuildSpecFile)"
+			XPath="nu:Build/nu:Project/nu:VersionPatch"
+			Value="$(VersionPatch)"
+		/>
+		
+		<XmlUpdate 
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(BuildSpecFile)"
+			XPath="nu:Build/nu:Project/nu:VersionBuild"
+			Value="$(VersionBuild)"
+		/>
+		
+		<XmlUpdate 
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(BuildSpecFile)"
+			XPath="nu:Build/nu:Project/nu:VersionFull"
+			Value="$(AssemblyFileVersion_FULL)"
+		/>
+	
+	</Target>
+	
+	<Target Name="CreateXml">
+		<PropertyGroup>
+			<BuildSpecFile>BuildSpecs_GEN.xml</BuildSpecFile>
+		</PropertyGroup>
+		
+		<ItemGroup>
+			<Line Include="line01"><Text>&lt;Assemblies&gt;</Text></Line>
+			<LineText Include="%(Line.Text)" />
+		</ItemGroup>
+		
+		<WriteLinesToFile
+			File="$(BuildSpecFile)"
+			Lines="@(LineText)"
+			Overwrite="true"
+		/>
+	</Target>
+	
+	<Target Name="GetVersionNumberFromFileJSON">
+		<PropertyGroup>
+			<SemVerFile Condition="Exists('package.json')">package.json</SemVerFile> <!-- 2015-04-02: Override-->
+		</PropertyGroup>
+		
+		<ReadLinesFromFile File="$(SemVerFile)">
+			<Output TaskParameter="Lines" ItemName="IterationNumberFileContents"/>
+		</ReadLinesFromFile>
+
+		<RegexMatch Input="@(IterationNumberFileContents)" Expression="(version)">
+			<Output ItemName="VersionNumberLineReturn" TaskParameter="Output"/>
+		</RegexMatch>
+
+		<RegexReplace 
+			Input="@(VersionNumberLineReturn)" 
+			Expression="&quot;version&quot;: &quot;(\d+).(\d+).(\d+)&quot;," 
+			Replacement="$1" 
+			Count="1">
+			<Output PropertyName="VersionMajor" TaskParameter="Output"/>
+		</RegexReplace>
+		
+		<RegexReplace 
+			Input="@(VersionNumberLineReturn)" 
+			Expression="&quot;version&quot;: &quot;(\d+).(\d+).(\d+)&quot;,"
+			Replacement="$2" 
+			Count="1">
+			<Output PropertyName="VersionMinor" TaskParameter="Output"/>
+		</RegexReplace>
+
+		<RegexReplace 
+			Input="@(VersionNumberLineReturn)" 
+			Expression="&quot;version&quot;: &quot;(\d+).(\d+).(\d+)&quot;,"
+			Replacement="$3" 
+			Count="1">
+			<Output PropertyName="VersionPatch" TaskParameter="Output"/>
+		</RegexReplace>
+
+		<RegexReplace 
+			Input="@(VersionNumberLineReturn)" 
+			Expression="&quot;version&quot;: &quot;(\d+).(\d+).(\d+)&quot;,"
+			Replacement="$4" 
+			Count="1">
+			<Output PropertyName="VersionBuild" TaskParameter="Output"/>
+		</RegexReplace>
+
+		<PropertyGroup>
+			<VersionBuild Condition="'$(VersionBuild)' == '$4'">1000</VersionBuild>
+		</PropertyGroup>
+		
+		<Message Text="Version Major (MajorNumber): $(VersionMajor)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+		<Message Text="Version Minor (MinorNumber): $(VersionMinor)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+		<Message Text="Version Patch (ReleaseNumber): $(VersionPatch)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+		<Message Text="Version Build (RevisionNumber): $(VersionBuild)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+
+		<PropertyGroup>
+			<AssemblyFileVersion_FULL>$(VersionMajor).$(VersionMinor).$(VersionPatch)</AssemblyFileVersion_FULL>
+			<AssemblyFileVersion_FULL_ISO>$(VersionMajor)_$(VersionMinor)_$(VersionPatch)</AssemblyFileVersion_FULL_ISO>
+			<AssemblyFileVersion_Release>$(VersionMajor).$(VersionMinor).$(VersionPatch)</AssemblyFileVersion_Release>
+			<AssemblyFileVersion_Release_ISO>$(VersionMajor)_$(VersionMinor)_$(VersionPatch)</AssemblyFileVersion_Release_ISO>
+		</PropertyGroup>
+		<Message Text="Current Version: $(AssemblyFileVersion_FULL)"/>
+	</Target>
+	
+	<Target Name="UpdateVersionMajor">
+		<CallTarget Targets="UpdateVersionMajor_Sub"/>
+		<CallTarget Targets="UpdateVersionGeneric"/>
+	</Target>
+
+	<Target Name="UpdateVersionMinor">
+		<CallTarget Targets="UpdateVersionMinor_Sub"/>
+		<CallTarget Targets="UpdateVersionGeneric"/>
+	</Target>
+
+	<Target Name="UpdateVersionPatch">
+		<CallTarget Targets="UpdateVersionPatch_Sub"/>
+		<CallTarget Targets="UpdateVersionGeneric"/>
+	</Target>
+
+	<Target Name="UpdateVersionBuild">
+		<CallTarget Targets="UpdateVersionBuild_Sub"/>
+		<CallTarget Targets="UpdateVersionGeneric"/>
+	</Target>
+
+	<Target Name="UpdateVersionMajor_Sub" DependsOnTargets="GetVersionNumberFromFile" Condition="Exists('$(SemVerFile)')">
+		<PropertyGroup>
+			<VersionMajorNext>$([MSBuild]::Add($(VersionMajor), 1))</VersionMajorNext>
+			<AssemblyFileVersion_FULL_Next>$(VersionMajorNext).0.0.1000</AssemblyFileVersion_FULL_Next>
+			<AssemblyInformationalVersion_FULL_Next>$(VersionMajorNext).0.0</AssemblyInformationalVersion_FULL_Next>
+		</PropertyGroup>
+		<Message Text="Version Build Next: $(VersionMajorNext)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+	</Target>
+
+	<Target Name="UpdateVersionMinor_Sub" DependsOnTargets="GetVersionNumberFromFile" Condition="Exists('$(SemVerFile)')">
+		<PropertyGroup>
+			<VersionMinorNext>$([MSBuild]::Add($(VersionMinor), 1))</VersionMinorNext>
+			<AssemblyFileVersion_FULL_Next>$(VersionMajor).$(VersionMinorNext).0.1000</AssemblyFileVersion_FULL_Next>
+			<AssemblyInformationalVersion_FULL_Next>$(VersionMajor).$(VersionMinorNext).0</AssemblyInformationalVersion_FULL_Next>
+		</PropertyGroup>
+		<Message Text="Version Build Next: $(VersionMinorNext)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+	</Target>
+
+	<Target Name="UpdateVersionPatch_Sub" DependsOnTargets="GetVersionNumberFromFile" Condition="Exists('$(SemVerFile)')">
+		<PropertyGroup>
+			<VersionPatchNext>$([MSBuild]::Add($(VersionPatch), 1))</VersionPatchNext>
+			<AssemblyFileVersion_FULL_Next>$(VersionMajor).$(VersionMinor).$(VersionPatchNext).1000</AssemblyFileVersion_FULL_Next>
+			<AssemblyInformationalVersion_FULL_Next>$(VersionMajor).$(VersionMinor).$(VersionPatchNext)</AssemblyInformationalVersion_FULL_Next>
+		</PropertyGroup>
+		<Message Text="Version Build Next: $(VersionPatchNext)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+	</Target>
+
+	<Target Name="UpdateVersionBuild_Sub" DependsOnTargets="GetVersionNumberFromFile" Condition="Exists('$(SemVerFile)')">
+		<PropertyGroup>
+			<VersionBuildNext Condition="'$(SetBuildNumber)' == ''">$([MSBuild]::Add($(VersionBuild), 1))</VersionBuildNext>
+			<VersionBuildNext Condition="'$(SetBuildNumber)' != ''">$(SetBuildNumber)</VersionBuildNext>
+			<AssemblyFileVersion_FULL_Next>$(VersionMajor).$(VersionMinor).$(VersionPatch).$(VersionBuildNext)</AssemblyFileVersion_FULL_Next>
+			<AssemblyInformationalVersion_FULL_Next>$(VersionMajor).$(VersionMinor).$(VersionPatch)</AssemblyInformationalVersion_FULL_Next>
+		</PropertyGroup>
+<!--
+			<Message Text="Version Major: $(VersionMajor)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+			<Message Text="Version Minor: $(VersionMinor)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+			<Message Text="Version Patch: $(VersionPatch)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+			<Message Text="Version Build: $(VersionBuild)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+			<Message Text="Version Build Next: $(VersionBuildNext)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+			<Message Text="Version Next: $(AssemblyFileVersion_FULL_Next)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+		-->
+	</Target>
+
+	<Target Name="UpdateVersionGeneric">
+		<CallTarget Targets="UpdateVersionGenericDOTNET"  Condition="$(VersionFileType) == '' OR $(VersionFileType) == '.NET'"/>
+		<CallTarget Targets="UpdateVersionGenericJSON" Condition="$(VersionFileType) == 'JSON'" />
+	</Target>
+	
+	<Target Name="UpdateVersionGenericDOTNET">
+		<!-- Update all the assembly info files with generated version info -->
+		<Message Text="-------------------------------------------------------------------" />
+		<Message Text="Modifying AssemblyInfo files..." Importance="Normal"/>
+		<Message Text="-------------------------------------------------------------------" />
+
+		<!-- Clear read-only attributes -->
+		<Attrib Files="$(SemVerFile)" Normal="true" />
+
+			<Message Text="Assembly File Version (Full - Next): $(AssemblyFileVersion_FULL_Next)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+			<Message Text="Assembly Informational Version (Full - Next): $(AssemblyInformationalVersion_FULL_Next)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+
+		<!-- Update: AssemblyFileVersion (support x.x.x.x) -->
+		<FileUpdate 
+			Files="$(SemVerFile)"
+			Regex="\[assembly\: (AssemblyFileVersion)\(\&quot;(\d+)\.(\d+)\.(\d+)\.(\d+)\&quot;\)\]"
+			ReplacementText="[assembly: AssemblyFileVersion(&quot;$(AssemblyFileVersion_FULL_Next)&quot;)]"
+		/>
+		<Message Text="$(SemVerFile) updated to version &quot;$(AssemblyFileVersion_FULL_Next)&quot;" Importance="Normal"/>
+		
+		<!-- Update: AssemblyInformationalVersion (support x.x.x) -->
+		<FileUpdate 
+			Files="$(SemVerFile)"
+			Regex="\[assembly\: (AssemblyInformationalVersion)\(\&quot;(\d+)\.(\d+)\.(\d+)\&quot;\)\]"
+			ReplacementText="[assembly: AssemblyInformationalVersion(&quot;$(AssemblyInformationalVersion_FULL_Next)&quot;)]"
+		/>
+		<Message Text="$(SemVerFile) files updated to version &quot;$(AssemblyInformationalVersion_FULL_Next)&quot;" Importance="Normal"/>
+		<Message Text="-------------------------------------------------------------------" />
+	</Target>
+	
+	<Target Name="UpdateVersionGenericJSON">
+		<PropertyGroup>
+			<SemVerFile Condition="Exists('package.json')">package.json</SemVerFile> <!-- 2015-04-02: Override-->
+		</PropertyGroup>
+		<!-- Update all the assembly info files with generated version info -->
+		<Message Text="-------------------------------------------------------------------" />
+		<Message Text="Modifying AssemblyInfo files..." Importance="Normal"/>
+		<Message Text="-------------------------------------------------------------------" />
+
+		<!-- Clear read-only attributes -->
+		<Attrib Files="$(SemVerFile)" Normal="true" />
+
+			<Message Text="Assembly File Version (Full - Next): $(AssemblyFileVersion_FULL_Next)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+			<Message Text="Assembly Informational Version (Full - Next): $(AssemblyInformationalVersion_FULL_Next)" Importance="Normal" Condition='$(DebugMsg) == True'/>
+
+		<!-- Update: AssemblyFileVersion (support x.x.x.x) -->
+		<FileUpdate 
+			Files="$(SemVerFile)"
+			Regex="&quot;version&quot;: &quot;(\d+).(\d+).(\d+)&quot;,"
+			ReplacementText="&quot;version&quot;: &quot;$(AssemblyInformationalVersion_FULL_Next)&quot;,"
+		/>
+		<Message Text="$(SemVerFile) updated to version &quot;$(AssemblyFileVersion_FULL_Next)&quot;" Importance="Normal"/>
+		
+		<!-- Update: AssemblyInformationalVersion (support x.x.x) -->
+		
+		<Message Text="$(SemVerFile) files updated to version &quot;$(AssemblyInformationalVersion_FULL_Next)&quot;" Importance="Normal"/>
+		<Message Text="-------------------------------------------------------------------" />
+	</Target>
+
+	<Target Name="UpdateAssemblyCopyright">
+		<!-- Update all the assembly info files with generated version info -->
+		<Message Text="-------------------------------------------------------------------" />
+		<Message Text="Modifying AssemblyInfo files..." Importance="Normal"/>
+		<Message Text="-------------------------------------------------------------------" />
+
+		<!-- Clear read-only attributes -->
+		<Attrib Files="$(SemVerFile)" Normal="true" />
+
+		<!-- Update: AssemblyCopyright -->
+		<!-- Notes: 
+			2015-01-30: GS - Standard expression "^.*(AssemblyCopyright).*" but was not working so dropped the anchor "^" -->
+		<FileUpdate 
+			Files="$(SemVerFile)"
+			Regex=".*(AssemblyCopyright).*"
+			ReplacementText="[assembly: AssemblyCopyright(&quot;© PNI Digital Media. All rights reserved.&quot;)]"
+		/>
+		<Message Text="$(SemVerFile) files updated Copyright Information" Importance="Normal"/>
+		<Message Text="-------------------------------------------------------------------" />
+	</Target>
+	
+	<Target Name="UpdateAssemblyCompany">
+		<!-- Update all the assembly info files with generated version info -->
+		<Message Text="-------------------------------------------------------------------" />
+		<Message Text="Modifying AssemblyInfo files..." Importance="Normal"/>
+		<Message Text="-------------------------------------------------------------------" />
+
+		<!-- Clear read-only attributes -->
+		<Attrib Files="$(SemVerFile)" Normal="true" />
+
+		<!-- Update: AssemblyCompany -->
+		<!-- Notes: 
+			2015-01-30: GS - Standard expression "^.*(AssemblyCompany).*" but was not working so dropped the anchor "^" -->
+		<FileUpdate 
+			Files="$(SemVerFile)"
+			Regex=".*(AssemblyCompany).*"
+			ReplacementText="[assembly: AssemblyCompany(&quot;PNI Digital Media Inc.&quot;)]"
+		/>
+		<Message Text="$(SemVerFile) files updated Company Information" Importance="Normal"/>
+		<Message Text="-------------------------------------------------------------------" />
+	</Target>
+	
+	<Target Name="UnitTests">
+		<CallTarget Condition="'$(TestType)' == ''" Targets="MSTestUnitTests"/> <!-- Default -->
+		<CallTarget Condition="'$(TestType)' == 'MSTest'" Targets="MSTestUnitTests"/> <!-- MSTest -->
+		<CallTarget Condition="'$(TestType)' == 'NUnit'" Targets="NUnitUnitTests"/> <!-- NUnit -->
+		<CallTarget Condition="'$(TestType)' == 'VSTest'" Targets="VSTestUnitTests"/> <!-- MSTest -->
+		<!--<CallTarget Condition="'$(TestType)' == 'JMeter'" Targets="JMeterUnitTests"/>--> <!-- NUnit -->
+	</Target>
+
+	<Target Name="IntegrationTests">
+		<!--<CallTarget Condition="'$(TestType)' == ''" Targets="MSTestIntegrationTests"/>--> <!-- Default -->
+		<!--<CallTarget Condition="'$(TestType)' == 'MSTest'" Targets="MSTestIntegrationTests"/>--> <!-- MSTest -->
+		<!--<CallTarget Condition="'$(TestType)' == 'NUnit'" Targets="NUnitIntegrationTests"/>--> <!-- NUnit -->
+		<CallTarget Condition="'$(TestType)' == 'JMeter'" Targets="JMeterIntegrationTests"/> <!-- NUnit -->
+	</Target>
+	
+	<Target Name="MSTestUnitTestsClean">
+		<RemoveDir Directories="$(BuildArtifacts)\MSTest"
+				   Condition="Exists('$(BuildArtifacts)\MSTest')"
+		/>
+	</Target>
+
+	<Target Name="VSTestUnitTestsClean">
+		<RemoveDir Directories="$(BuildArtifacts)\VSTest"
+				   Condition="Exists('$(BuildArtifacts)\VSTest')"
+		/>
+	</Target>
+
+	<Target Name="NUnitUnitTestsClean">
+		<RemoveDir Directories="$(BuildArtifacts)\NUnit" 
+				   Condition="Exists('$(BuildArtifacts)\NUnit')"
+		/>
+	</Target>
+
+	<Target Name="JMeterIntegrationTestsClean">
+		<RemoveDir Directories="$(BuildArtifacts)\JMeter" 
+				   Condition="Exists('$(BuildArtifacts)\JMeter')"
+		/>
+	</Target>
+	
+	<Target Name="MSTestUnitTests" DependsOnTargets="GetVersionNumberFromFile;MSTestUnitTestsClean">
+		<PropertyGroup>
+			<MSTestLocal>$(MSTestVS120)</MSTestLocal>
+			<IncludeFilter>
+				.\**\*.Test.dll;
+				.\**\*.Tests.dll;
+				.\**\*.UnitTest.dll;
+				.\**\*.UnitTests.dll;
+				.\**\Test.*.dll;
+				.\**\Tests.*.dll;
+			</IncludeFilter>
+			<ExcludeFilter>
+				.\Artifacts\**\*;
+				.\**\Out\**\*;
+				.\**\Obj\**\*
+			</ExcludeFilter>
+			<TestIgnore Condition="'$(TestIgnore)' == ''">true</TestIgnore>
+			<TestIgnore Condition="'$(TestIgnore)' == 'false'">false</TestIgnore>
+		</PropertyGroup>
+		<!--<Message Text="Version Full: $(AssemblyFileVersion_FULL_ISO)"/>	-->
+
+		<ItemGroup>
+			<MSTestProjects 
+				Include="$(IncludeFilter)" 
+				Exclude="$(ExcludeFilter)" 
+			/>
+		</ItemGroup>
+		
+		<MakeDir Directories="$(BuildArtifacts)\MSTest"
+				 Condition="!Exists('$(BuildArtifacts)\MSTest')"
+		/>
+	
+		<!-- Continue on Error -->
+		<Exec 
+			Command='"$(MSTestLocal)" /testcontainer:%(MSTestProjects.Identity) /resultsfile:$(BuildArtifacts)\MSTest\%(MSTestProjects.FileName)_$(AssemblyFileVersion_FULL_ISO)_$(Configuration).trx'
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			ContinueOnError="WarnAndContinue"
+			Condition="'$(TestIgnore)' == 'true'"
+		/>
+
+		<!-- Stop on Error -->
+		<Exec 
+			Command='"$(MSTestLocal)" /testcontainer:%(MSTestProjects.Identity) /resultsfile:$(BuildArtifacts)\MSTest\%(MSTestProjects.FileName)_$(AssemblyFileVersion_FULL_ISO)_$(Configuration).trx'
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			Condition="'$(TestIgnore)' == 'false'"
+		/>
+		
+		<Message Text="##teamcity[importData id='mstest' file='$(BuildArtifacts)\MSTest\%(MSTestProjects.FileName)_$(AssemblyFileVersion_FULL_ISO)_$(Configuration).trx']" 
+				 Condition="'$(TeamCityActivation_TMP)' == 'true'"
+		/>
+
+	</Target>
+
+	<Target Name="VSTestUnitTests" DependsOnTargets="GetVersionNumberFromFile;VSTestUnitTestsClean">
+		<PropertyGroup>
+			<VSTestLocal>$(VSTestVS120)</VSTestLocal>
+			<IncludeFilter>
+				.\**\*.Test.dll;
+				.\**\*.Tests.dll;
+				.\**\*.UnitTest.dll;
+				.\**\*.UnitTests.dll;
+				.\**\Test.*.dll;
+				.\**\Tests.*.dll;
+			</IncludeFilter>
+			<ExcludeFilter>
+				.\Artifacts\**\*;
+				.\**\Out\**\*;
+				.\**\Obj\**\*
+			</ExcludeFilter>
+			<VSTestSettingsFile>VSTest.runsettings</VSTestSettingsFile>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<VSTestProjects 
+				Include="$(IncludeFilter)" 
+				Exclude="$(ExcludeFilter)" 
+			/>
+		</ItemGroup>
+		
+		<MakeDir Directories="$(BuildArtifacts)\VSTest"
+				 Condition="!Exists('$(BuildArtifacts)\VSTest')"
+		/>
+
+		<ItemGroup>
+			<VSTestString Include="%3C?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?%3E"/>
+			<VSTestString Include="%3CRunSettings%3E"/>
+			<VSTestString Include="%20 %3CRunConfiguration%3E"/>
+			<VSTestString Include="%20   %3CResultsDirectory%3E$(BuildArtifacts)\VSTest%3C/ResultsDirectory%3E"/>
+			<VSTestString Include="%20 %3C/RunConfiguration%3E"/>
+			<VSTestString Include="%3C/RunSettings%3E"/>
+		</ItemGroup>
+
+		<WriteLinesToFile
+			File="$(VSTestSettingsFile)"
+			Lines="@(VSTestString)"
+			Overwrite="true"
+		/>
+
+		<Exec 
+			Command='"$(VSTestLocal)" /settings:$(VSTestSettingsFile) %(VSTestProjects.Identity) /Platform:$(Platform) /logger:trx'
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			ContinueOnError="WarnAndContinue"
+		/>
+
+		<Message Text="##teamcity[importData id='mstest' file='$(BuildArtifacts)\VSTest\*.trx']" 
+				 Condition="'$(TeamCityActivation_TMP)' == 'true'"
+		/>
+
+	</Target>
+
+	<Target Name="NUnitUnitTests" DependsOnTargets="GetVersionNumberFromFile;NUnitUnitTestsClean" Condition="Exists('$(NUnitPath)')">
+		<!-- NUnit Tests not setup yet -->
+		<PropertyGroup>
+			<NUnitLocal Condition="Exists('$(NUnitPath)')">$(NUnitPath)</NUnitLocal>
+			<IncludeFilter>
+				.\**\*.Test.dll;
+				.\**\*.Tests.dll;
+				.\**\*.UnitTest.dll;
+				.\**\*.UnitTests.dll;
+				.\**\Test.*.dll;
+				.\**\Tests.*.dll;
+			</IncludeFilter>
+			<ExcludeFilter>
+				.\Artifacts\**\*;
+				.\**\Out\**\*;
+				.\**\Obj\**\*
+			</ExcludeFilter>
+		</PropertyGroup>
+		<!--<Message Text="Version Full: $(AssemblyFileVersion_FULL_ISO)"/>-->
+
+		<ItemGroup>
+			<NUnitProjects 
+				Include="$(IncludeFilter)" 
+				Exclude="$(ExcludeFilter)" 
+			/>
+		</ItemGroup>
+	
+		<MakeDir Directories='$(BuildArtifacts)\NUnit'
+				 Condition="!Exists('$(BuildArtifacts)\NUnit')"
+		/>
+
+		<CreateItem Include="%(NUnitProjects.Identity)">
+			<Output TaskParameter="Include" ItemName="TestAssembly" />
+		</CreateItem>
+
+		<Message Text="@(TestAssembly)" Condition='$(DebugMsg) == True'/>
+		<NUnit ToolPath="$(NUnitLocal)" Assemblies="@(TestAssembly)" OutputXmlFile="$(BuildArtifacts)\NUnit\%(NUnitProjects.FileName)_$(AssemblyFileVersion_FULL_ISO)_$(Configuration).xml" />
+
+		<Message Text="##teamcity[importData id='nunit' file='$(BuildArtifacts)\NUnit\%(NUnitProjects.FileName)_$(AssemblyFileVersion_FULL_ISO)_$(Configuration).xml']"
+				 Condition="'$(TeamCityActivation_TMP)' == 'true'"
+		/>
+
+	</Target>
+
+	<Target Name="JMeterIntegrationTests" DependsOnTargets="GetVersionNumberFromFile;JMeterIntegrationTestsClean" Condition="Exists('$(JMeterPath)')">
+		<!-- JMeter Tests not setup yet -->
+		<PropertyGroup>
+			<JMeterLocal Condition="Exists('$(JMeterPath)')">$(JMeterPath)</JMeterLocal>
+			<NAntLocal Condition="Exists('$(NAntPath)')">$(NAntPath)</NAntLocal>
+			<IncludeFilter>
+				.\**\JMeterTests.build
+			</IncludeFilter>
+			<ExcludeFilter>
+				
+			</ExcludeFilter>
+		</PropertyGroup>
+		<!--<Message Text="Version Full: $(AssemblyFileVersion_FULL_ISO)"/>-->
+
+		<ItemGroup>
+			<JMeterProjects 
+				Include="$(IncludeFilter)" 
+				Exclude="$(ExcludeFilter)" 
+			/>
+		</ItemGroup>
+	
+		<MakeDir Directories='$(BuildArtifacts)\JMeter'
+				 Condition="!Exists('$(BuildArtifacts)\JMeter')"
+		/>
+
+		<CreateItem Include="%(JMeterProjects.Identity)">
+			<Output TaskParameter="Include" ItemName="TestAssembly" />
+		</CreateItem>
+
+		<Message Text="Assemblies: @(TestAssembly)" Condition='$(DebugMsg) == True'/>
+		
+		<Exec 
+			Command='"$(NAntLocal)" -buildfile:@(TestAssembly) -D:project.dir=. -D:project.branch=Trunk -D:project.environment=Dev -D:project.testselection=Nightly'
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			ContinueOnError="WarnAndContinue"
+		/>
+		<!--
+		<Message Text="##teamcity[importData id='nunit' file='$(BuildArtifacts)\JMeter\%(JMeterProjects.FileName)_$(AssemblyFileVersion_FULL_ISO)_$(Configuration).xml']"
+				 Condition="'$(TeamCityActivation_TMP)' == 'true'"
+		/>-->
+
+	</Target>
+
+	<Target Name="ReadNuGetConfig" DependsOnTargets="NuGetSettings">
+		<Message Text="-------------------------------------------------------------------" Importance="high" />
+		<Message Text="Reading: NuGet configuration settings" Importance="high" />
+		<Message Text="-------------------------------------------------------------------" Importance="high" />
+		
+		<Message Text="Reading: 3rdparty" />
+		<XmlRead
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(NuGetConfig)"
+			XPath="/configuration/packageSources/add[@key='3rdparty']/@value">
+			<Output TaskParameter="Value" PropertyName="CurrentRepo3rdparty" />
+		</XmlRead>
+
+		<Message Text="Reading: official" />
+		<XmlRead
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(NuGetConfig)"
+			XPath="/configuration/packageSources/add[@key='official']/@value">
+			<Output TaskParameter="Value" PropertyName="CurrentRepoOfficial" />
+		</XmlRead>
+
+		<Message Text="Reading: teams" />
+		<XmlRead
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(NuGetConfig)"
+			XPath="/configuration/packageSources/add[@key='teams']/@value">
+			<Output TaskParameter="Value" PropertyName="CurrentRepoTeams" />
+		</XmlRead>
+
+		<Message Text="Reading: local" />
+		<XmlRead
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(NuGetConfig)"
+			XPath="/configuration/packageSources/add[@key='local']/@value">
+			<Output TaskParameter="Value" PropertyName="CurrentRepoLocal" />
+		</XmlRead>
+
+		<Message Text="Reading: Microsoft and .NET" />
+		<XmlRead
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(NuGetConfig)"
+			XPath="/configuration/packageSources/add[@key='microsoft']/@value">
+			<Output TaskParameter="Value" PropertyName="CurrentRepoMicrosoft" />
+		</XmlRead>
+
+		<Message Text="Reading: NuGet.org" />
+		<XmlRead
+			Prefix="nu"
+			Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+			XmlFileName="$(NuGetConfig)"
+			XPath="/configuration/packageSources/add[@key='nuget.org']/@value">
+			<Output TaskParameter="Value" PropertyName="CurrentRepoNuGetORG" />
+		</XmlRead>
+		<Message Text="-------------------------------------------------------------------" Importance="high" />
+	</Target>
+
+	<Target Name="UpdateNuGetConfig" DependsOnTargets="ReadNuGetConfig" >
+		<Message Text="-------------------------------------------------------------------" Importance="high" />
+		<Message Text="Update: NuGet configuration settings"/>
+		<Message Text="-------------------------------------------------------------------" Importance="high" />
+		<Message Text="Attrib: Remove Read-Only flag on $(CurrentNuGet)" />
+		<Exec
+			Command='attrib -R $(NuGetConfig)'
+			WorkingDirectory="$(NuGetPath)"
+		/>
+
+		<Message Text="Updating: 3rdParty Repo" />
+			<XmlUpdate
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(NuGetConfig)"
+				XPath="/configuration/packageSources/add[@key='3rdparty']/@value"
+				Value="$(NuGetRepo3rdparty)"
+			/>
+
+		<Message Text="Updating: Official Repo" />
+			<XmlUpdate
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(NuGetConfig)"
+				XPath="/configuration/packageSources/add[@key='official']/@value"
+				Value="$(NuGetRepoOfficial)"
+			/>
+	
+		<Message Text="Updating: Teams Repo" />
+			<XmlUpdate
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(NuGetConfig)"
+				XPath="/configuration/packageSources/add[@key='teams']/@value"
+				Value="$(NuGetRepoCandidate)"
+				Condition="'$(BuildType)' != 'Official'"	
+			/>
+
+			<XmlUpdate
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(NuGetConfig)"
+				XPath="/configuration/packageSources/add[@key='teams']/@value"
+				Value=""
+				Condition="'$(BuildType)' == 'Official'"
+			/>
+			
+		<Message Text="Updating: Local Repo" />
+			<XmlUpdate
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(NuGetConfig)"
+				XPath="/configuration/packageSources/add[@key='local']/@value"
+				Value="$(NuGetRepoLocal)"
+				Condition="'$(BuildType)' != 'Official'"
+			/>
+			<XmlUpdate
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(NuGetConfig)"
+				XPath="/configuration/packageSources/add[@key='local']/@value"
+				Value=""
+				Condition="'$(BuildType)' == 'Official'"
+			/>
+			
+		<Message Text="Updating: Microsoft and .NET Repo" />
+			<XmlUpdate
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(NuGetConfig)"
+				XPath="/configuration/packageSources/add[@key='microsoft']/@value"
+				Value="$(NuGetRepoURLMicrosoft)"
+			/>
+			<XmlUpdate
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(NuGetConfig)"
+				XPath="/configuration/packageSources/add[@key='microsoft']/@value"
+				Value=""
+				Condition="'$(DevSite)' == 'BlackOps'"
+			/>
+			
+		<Message Text="Updating: NuGet.org Repo" />
+			<XmlUpdate
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(NuGetConfig)"
+				XPath="/configuration/packageSources/add[@key='nuget.org']/@value"
+				Value="$(NuGetRepoURLNuGetORG)"
+				Condition="'$(BuildType)' != 'Official'"
+			/>
+			<XmlUpdate
+				Prefix="nu"
+				Namespace="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"
+				XmlFileName="$(NuGetConfig)"
+				XPath="/configuration/packageSources/add[@key='nuget.org']/@value"
+				Value=""
+				Condition="'$(BuildType)' == 'Official'"
+			/>
+		<Message Text="-------------------------------------------------------------------" Importance="high" />
+	</Target>
+
+	<Target Name="DisableNuGetConfig" DependsOnTargets="ReadNuGetConfig" >
+		<Message Text="-------------------------------------------------------------------" Importance="high" />
+		<Message Text="Disable: NuGet Package Sources"/>
+		<Message Text="-------------------------------------------------------------------" Importance="high" />
+		<Message Text="Attrib: Remove Read-Only flag on $(CurrentNuGet)" />
+		<Exec
+			Command='attrib -R $(NuGetConfig)'
+			WorkingDirectory="$(NuGetPath)"
+		/>
+		<ItemGroup>
+			<!-- Set: Attributes -->
+			<GroupToAdd Include="disabledPackageSources"/>
+			
+			<!-- Set: Elements -->
+			<NuGetConfigToAdd Include="3rdparty" Condition="'$(Disable)' == '3rdParty' OR '$(Disable)' == 'All'"/>
+			<NuGetConfigToAdd Include="official" Condition="'$(Disable)' == 'official' OR '$(Disable)' == 'All'"/>
+			<NuGetConfigToAdd Include="teams" Condition="'$(Disable)' == 'teams' OR '$(Disable)' == 'All'"/>
+			<NuGetConfigToAdd Include="local" Condition="'$(Disable)' == 'local' OR '$(Disable)' == 'All'"/>
+			<NuGetConfigToAdd Include="microsoft" Condition="'$(Disable)' == 'microsoft' OR '$(Disable)' == 'All'"/>
+			<NuGetConfigToAdd Include="nuget.org" Condition="'$(Disable)' == 'nuget.org' OR '$(Disable)' == 'All'"/>
+		</ItemGroup>
+
+		<!-- Create packageSources attribute. -->
+		<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+				 Targets="AddNuGetAttribute" 
+				 Properties="SetElement=%(GroupToAdd.Identity)"/>
+				 
+		<!-- Create repository elements into the packageSource parent element. -->
+		<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+				 Targets="AddNuGetDisableElement" 
+				 Properties="SetAttribute=%(NuGetConfigToAdd.Identity)"
+				 Condition="'%(NuGetConfigToAdd.Identity)' != ''"/>
+
+	</Target>
+	
+	<Target Name="AddNuGetConfig" DependsOnTargets="NuGetSettings" Condition="'$(MSBuildExtensionPack_Status)' == 'true'">
+		<!-- Requires: MSBuild Extension Pack -->
+		<ItemGroup>
+			<!-- Set: Attributes -->
+			<GroupToAdd Include="packageSources"/>
+			
+			<!-- Set: Elements -->
+			<NuGetConfigToAdd Include="3rdparty"/>
+			<NuGetConfigToAdd Include="official"/>
+			<NuGetConfigToAdd Include="teams"/>
+			<NuGetConfigToAdd Include="local"/>
+			<NuGetConfigToAdd Include="microsoft"/>
+			<NuGetConfigToAdd Include="nuget.org"/>
+		</ItemGroup>
+
+		<!-- Create packageSources attribute. -->
+		<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+				 Targets="AddNuGetAttribute" 
+				 Properties="SetElement=%(GroupToAdd.Identity)"/>
+				 
+		<!-- Create repository elements into the packageSource parent element. -->
+		<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+				 Targets="AddNuGetElement" 
+				 Properties="SetAttribute=%(NuGetConfigToAdd.Identity)"/>
+
+		<!-- Update newly created nuget repo elements. -->
+		<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+				 Targets="UpdateNuGetConfig" 
+				 Properties=""/>
+	</Target>
+
+	<Target Name="AddNuGetAttribute"  DependsOnTargets="NuGetSettings" Condition="'$(MSBuildExtensionPack_Status)' == 'true'">
+		<!-- Check file to see if element exists. -->
+		<MSBuild.ExtensionPack.Xml.XmlFile 
+				TaskAction="ReadElementXml"
+				File="$(NuGetConfig)"
+				XPath="/configuration/$(SetElement)">
+			<Output  PropertyName="Element_Status" TaskParameter="Value" />
+		</MSBuild.ExtensionPack.Xml.XmlFile>
+		
+		<PropertyGroup>
+			<AddNuGetAttribute_Status Condition="'$(Element_Status)' != ''">false</AddNuGetAttribute_Status>
+			<AddNuGetAttribute_Status Condition="'$(Element_Status)' == ''">true</AddNuGetAttribute_Status>
+		</PropertyGroup>
+		
+		<!-- Create Element -->
+		<MSBuild.ExtensionPack.Xml.XmlFile 
+				TaskAction="AddElement" 
+				File="$(NuGetConfig)" 
+				Element="$(SetElement)" 
+				XPath="/configuration"  
+				Condition="'$(AddNuGetAttribute_Status)'=='true'"
+			/>
+	</Target>
+	
+	<Target Name="AddNuGetElement"  DependsOnTargets="NuGetSettings" Condition="'$(MSBuildExtensionPack_Status)' == 'true'">
+		<!-- Check file to see if element exists. -->
+		<MSBuild.ExtensionPack.Xml.XmlFile 
+				TaskAction="ReadAttribute"
+				File="$(NuGetConfig)"
+				XPath="/configuration/packageSources/add[@key='$(SetAttribute)']/@key">
+			<Output PropertyName="Element_Status" TaskParameter="Value" />
+		</MSBuild.ExtensionPack.Xml.XmlFile>
+			
+		<PropertyGroup>
+			<AddNuGetElement_Status Condition="'$(Element_Status)' != ''">false</AddNuGetElement_Status>
+			<AddNuGetElement_Status Condition="'$(Element_Status)' == ''">true</AddNuGetElement_Status>
+		</PropertyGroup>
+		
+		<!-- Create Element -->
+		<MSBuild.ExtensionPack.Xml.XmlFile 
+				TaskAction="AddElement" 
+				File="$(NuGetConfig)" 
+				Key="key" 
+				Value="$(SetAttribute)" 
+				Element="add" 
+				XPath="/configuration/packageSources" 
+				Condition="'$(AddNuGetElement_Status)'=='true'"
+		/>
+		
+		<!-- Add Attribute to Element -->
+		<MSBuild.ExtensionPack.Xml.XmlFile 
+				TaskAction="AddAttribute" 
+				File="$(NuGetConfig)" 
+				Key="value" 
+				Value="%(XMLConfigAttributesToAdd.Value)" 
+				XPath="/configuration/packageSources/add[@key='$(SetAttribute)']" 
+				Condition="'$(AddNuGetElement_Status)'=='true'"
+		/>
+		
+	</Target>
+	
+	<Target Name="AddNuGetDisableElement"  DependsOnTargets="NuGetSettings" Condition="'$(MSBuildExtensionPack_Status)' == 'true'">
+		<!-- Check file to see if element exists. -->
+		<MSBuild.ExtensionPack.Xml.XmlFile 
+				TaskAction="ReadAttribute"
+				File="$(NuGetConfig)"
+				XPath="/configuration/disabledPackageSources/add[@key='$(SetAttribute)']/@key">
+			<Output PropertyName="Element_Status" TaskParameter="Value" />
+		</MSBuild.ExtensionPack.Xml.XmlFile>
+			
+		<PropertyGroup>
+			<AddNuGetElement_Status Condition="'$(Element_Status)' != ''">false</AddNuGetElement_Status>
+			<AddNuGetElement_Status Condition="'$(Element_Status)' == ''">true</AddNuGetElement_Status>
+		</PropertyGroup>
+		
+		<!-- Create Element -->
+		<MSBuild.ExtensionPack.Xml.XmlFile 
+				TaskAction="AddElement" 
+				File="$(NuGetConfig)" 
+				Key="key" 
+				Value="$(SetAttribute)" 
+				Element="add" 
+				XPath="/configuration/disabledPackageSources" 
+				Condition="'$(AddNuGetElement_Status)'=='true'"
+		/>
+		
+		<!-- Add Attribute to Element -->
+		<MSBuild.ExtensionPack.Xml.XmlFile 
+				TaskAction="AddAttribute" 
+				File="$(NuGetConfig)" 
+				Key="value" 
+				Value="true" 
+				XPath="/configuration/disabledPackageSources/add[@key='$(SetAttribute)']" 
+				Condition="'$(AddNuGetElement_Status)'=='true'"
+		/>
+		
+	</Target>
+	
+	<Target Name="TransformWebConfig">
+		<CallTarget Targets="TransformWebConfig_SUB" Condition="'$(MSBuildDevWeb_Status)' == 'true'" />
+		<Error Text="NOTICE: The Web Developer Tools are not currently installed.  These tools are required for the transform action." Condition="'$(MSBuildDevWeb_Status)' == 'false'" />
+	</Target>
+
+	<Target Name="TransformWebConfig_SUB" Condition="'$(MSBuildDevWeb_Status)' == 'true'" DependsOnTargets="GetVersionNumberFromFile">
+		<!-- Source: "%(SolutionRoot.FullPath)\Web.config"
+			 Transform: %(SolutionRoot.FullPath)\Web.Production.config"
+			 Destination: "%(SolutionRoot.FullPath)\Web.config.$(versionfull).config"
+		-->
+		<PropertyGroup>
+			<WebConfigProjectName_INT Condition="'$(WebConfigProjectName)' == ''"></WebConfigProjectName_INT>
+			<WebConfigProjectName_INT Condition="'$(WebConfigProjectName)' != ''">$(WebConfigProjectName)\</WebConfigProjectName_INT>
+
+			<WebConfigSource_INT>$(WebConfigProjectName_INT)$(WebConfigSource)</WebConfigSource_INT>
+			<WebConfigTransform_INT>$(WebConfigProjectName_INT)$(WebConfigTransform)</WebConfigTransform_INT>
+
+			<WebConfigTarget_Override Condition="'$(WebConfigTarget)' == ''">$(WebConfigTransform).$(AssemblyFileVersion_FULL).config</WebConfigTarget_Override>
+
+			<WebConfigTarget_INT Condition="'$(WebConfigTarget)' != ''">$(WebConfigProjectName_INT)$(WebConfigTarget)</WebConfigTarget_INT>
+			<WebConfigTarget_INT Condition="'$(WebConfigTarget)' == ''">$(WebConfigProjectName_INT)$(WebConfigTarget_Override)</WebConfigTarget_INT>
+
+		</PropertyGroup>
+
+		<!--
+		<Message Text="*** Debug: TransformWebConfig_SUB ***" />
+		<Message Text="WebConfigProjectName_INT: $(WebConfigProjectName_INT)" />
+		<Message Text="WebConfigSource_INT: $(WebConfigSource_INT)" />
+		<Message Text="WebConfigTransform_INT: $(WebConfigTransform_INT)" />
+		<Message Text="WebConfigTarget_Override: $(WebConfigTarget_Override)" />
+		<Message Text="WebConfigTarget_INT: $(WebConfigTarget_INT)" />
+		<Message Text="**************************" />
+		-->
+
+		<TransformXml 
+			Source="$(WebConfigSource_INT)"
+			Transform="$(WebConfigTransform_INT)"
+			Destination="$(WebConfigTarget_INT)"
+			StackTrace="true" 
+		/>
+	</Target>
+
+	<Target Name="Package" DependsOnTargets="Boot">
+		<!--<CallTarget Targets="PackageNuGet"/>-->
+		<CallTarget Targets="PackageNuGet" Condition="'$(PackageType)' == ''" />
+		<CallTarget Targets="PackageNuGet" Condition="'$(PackageType)' == 'NuGet'" />
+		<CallTarget Targets="PackageProjectWeb" Condition="'$(PackageType)' == 'WebApp'" />
+		<CallTarget Targets="PackageApp" Condition="'$(PackageType)' == 'App'" />
+		<CallTarget Targets="PackageSource" Condition="'$(PackageType)' == 'Source'" />
+		<CallTarget Targets="PackageFolder" Condition="'$(PackageType)' == 'Folder'" />
+		<CallTarget Targets="PackageOcto" Condition="'$(PackageType)' == 'Octo'" />
+	</Target>
+
+	<Target Name="PackageNuGet" DependsOnTargets="Boot;NuGetPackageSettings">
+		
+		<ItemGroup>
+			<nuspecFiles Include="*.nuspec" Condition="'$(NuSpecOverrideStatus)' == 'false'"/>
+			<nuspecFiles Include="$(NuSpecOverride).nuspec" Condition="'$(NuSpecOverrideStatus)' == 'true' AND '$(nuspecExtension)' == 'true' "/>
+			<nuspecFiles Include="$(NuSpecOverride)" Condition="'$(NuSpecOverrideStatus)' == 'true' AND '$(nuspecExtension)' == 'false'"/>
+		</ItemGroup>
+		
+		<PropertyGroup>
+			<nuspecFilesFound Condition="Exists(%(nuspecFiles.Identity))">true</nuspecFilesFound>
+			<nuspecFilesFound Condition="!Exists(%(nuspecFiles.Identity))">false</nuspecFilesFound>
+		</PropertyGroup>
+
+		<Message Text="No nuspec found.  No Package will be generated."
+				 Importance="high"
+				 Condition="'$(nuspecFilesFound)' == 'true'"/>
+		
+		<Exec
+			Command='attrib -R /S temp/*'
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			Condition="'$(nuspecFilesFound)' == 'true'"
+		/>
+		
+		<Exec
+			Command='rmdir /S /Q temp\'
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			Condition="'$(nuspecFilesFound)' == 'true'"
+		/>
+		
+		<Exec
+			Command='md temp\'
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			Condition="'$(nuspecFilesFound)' == 'true' AND !Exists('$(MSBuildProjectDirectory)\temp') "
+		/>
+
+		<MSBuild 
+			Projects="$(MSBuildProjectFile)"
+			Properties="nugetTarget=$(nugetTarget)"
+			Targets="PrepOutputLocal"
+			Condition="'$(nuspecFilesFound)' == 'true'"
+		/>
+
+		<MSBuild 
+			Projects="$(MSBuildProjectFile)"
+			Properties="CurrentNuGet=%(nuspecFiles.Identity)"
+			Targets="PackageNuGetBulk"
+			Condition="'$(nuspecFilesFound)' == 'true'"
+		/>
+
+		<!--<Exec
+			Command='move *.nupkg ..\nupkg\"$(configuration)"'
+			WorkingDirectory="$(MSBuildProjectDirectory)\temp"
+			Condition="'$(nuspecFilesFound)' == 'true'"
+		/> -->
+
+		<Exec
+			Command='move *.nupkg "$(nugetTarget)"'
+			WorkingDirectory="$(MSBuildProjectDirectory)\temp"
+			Condition="'$(nuspecFilesFound)' == 'true'"
+		/>
+		
+		<!-- PAUSE -->
+		<!--	<MSBuild.Community.Tasks.Prompt Text="Press any key..." >
+				<Output TaskParameter="UserInput" PropertyName="out" />
+			</MSBuild.Community.Tasks.Prompt>
+		-->
+		<!-- ***** -->
+		<Exec
+			Command='rmdir /S /Q temp\'
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			Condition="'$(nuspecFilesFound)' == 'true'"
+		/>
+	
+	</Target>
+	
+	<Target Name="PackageNuGetBulk">
+		<!-- Renamed from "BulkPackage" to "PackageNuGetBulk" (2014-10-24)-->
+		<MSBuild 
+			Projects="$(MSBuildProjectFile)"
+			Targets="UpdateNuspec"
+			Condition="'$(NuSpecUpdate)'== 'true'"
+		/>
+		<PropertyGroup>
+			<versionRelease Condition="'$(versionRelease)' == ''">$(AssemblyFileVersion_Release)</versionRelease>
+		</PropertyGroup>
+
+		<!--
+		<Message Text="*** Debug: BulkPackage ***" />
+		<Message Text="Assembly File Version (Release): $(AssemblyFileVersion_Release)" />
+		<Message Text="Version Release: $(versionRelease)" />
+		<Message Text="**************************" />
+		-->
+
+		<PropertyGroup>
+		<NuGetParameters>pack &quot;$(MSBuildProjectDirectory)\$(CurrentNuGet)&quot;^
+			-NoPackageAnalysis^
+			-NoDefaultExcludes^
+			-Prop Configuration=$(configuration)^
+			-Prop versionFull=$(versionFull)^
+			-Prop versionRelease=$(versionRelease)^
+			-Prop version=$(versionWrite)^
+			-Prop FileVersion=$(versionFull)^
+		</NuGetParameters>
+		<!-- 2015-07-25: GS - PackageNuGetBulk: Add "-Prop FileVersion" for backwards compatibility with older nuspec files.-->
+		</PropertyGroup>
+		
+		<Exec
+			Command="&quot;$(MSBuildProjectDirectory)\.nuget\NuGet.exe&quot; $(NuGetParameters)"
+			WorkingDirectory="$(MSBuildProjectDirectory)\temp"
+		/>
+		
+	</Target>
+	
+	<Target Name="PackageProjectWeb" DependsOnTargets="GetVersionNumberFromFile" Condition="'$(PackageProjectName)' != ''">
+		<PropertyGroup>
+			<!-- Name of the solution to be compiled without the .sln extension -->
+			<PackageProjectName>$(PackageProjectName)</PackageProjectName>
+			<!-- Name of the zip file -->
+			<PackageZipName Condition="'$(PackageZipOverride)' == ''">$(PackageProjectName)</PackageZipName>
+			<PackageZipName Condition="'$(PackageZipOverride)' != ''">$(PackageZipOverride)</PackageZipName>
+			
+			<!-- Path where the solution file is located (.sln) -->
+			<SolutionPath>%(SolutionRoot.FullPath)</SolutionPath>
+			<!-- Path where the project files are located -->
+			<ProjectPath Condition="'$(PackageProjectSubFolder)' == ''">$(SolutionPath)\$(PackageProjectName)\</ProjectPath>
+			<ProjectPath Condition="'$(PackageProjectSubFolder)' != ''">$(SolutionPath)\$(PackageProjectSubFolder)\$(PackageProjectName)\</ProjectPath>
+
+			<!-- Location of compiled files -->
+			<FilePath Condition="$(Configuration)=='Debug'">$(ProjectPath)</FilePath>
+			<FilePath Condition="$(Configuration)=='Release'">$(ProjectPath)</FilePath>	
+
+			<!-- Path where the nightly zip file will be copied -->
+			<PackagePathTarget>$(BuildArtifacts)\packages\$(Configuration)</PackagePathTarget>		
+
+			<StringDate>$([System.DateTime]::Now.ToString('yyyy-MM-dd'))</StringDate>
+
+			<!-- List of files that will be included in the package -->
+			<!-- Release -->
+			<IncludeFilter Condition="$(Configuration)=='Release'">
+				$(FilePath)\**\*.*
+			</IncludeFilter>
+			<!-- Debug -->
+			<IncludeFilter Condition="$(Configuration)=='Debug'">
+				$(FilePath)\**\*.*
+			</IncludeFilter>
+
+			<!-- List of files that will be excluded from the package -->
+			<!-- Release -->
+			<ExcludeFilter Condition="$(Configuration)=='Release'">
+				$(FilePath)\**\*.cs;
+				$(FilePath)\**\*.user;
+				$(FilePath)\**\*.exp;
+				$(FilePath)\**\obj\**;
+				$(FilePath)\**\migrations\**;
+				$(FilePath)\**\Properties\**;
+				$(FilePath)\packages.config;
+				$(FilePath)\*.csproj;
+				$(FilePath)\**\*.vspscc;
+				$(FilePath)\**\*.vssscc;
+				$(FilePath)\*.nuspec;
+				$(FilePath)\**\*.nupkg;
+				$(FilePath)\**\Thumbs.db;
+				$(FilePath)\**\vssver.scc;
+				$(FilePath)\**\packages\**;
+				$(FilePath)\**\.gitignore;
+				$(FilePath)\Project.Targets;
+				$(FilePath)\Custom.Targets;
+				$(FilePath)\*.sln;
+				$(FilePath)\**\.nuget\**;
+				$(FilePath)\**\.octopack\**;
+				$(FilePath)\**\.utilities\**;
+				$(FilePath)\**\BuildInfo.txt;
+				$(FilePath)\**\Quickver.txt;
+			</ExcludeFilter>
+			<!-- Debug -->
+			<ExcludeFilter Condition="$(Configuration)=='Debug'">
+				$(FilePath)\**\*.cs;
+				$(FilePath)\**\*.user;
+				$(FilePath)\**\*.exp;
+				$(FilePath)\**\obj\**;
+				$(FilePath)\**\migrations\**;
+				$(FilePath)\**\Properties\**;
+				$(FilePath)\packages.config;
+				$(FilePath)\*.csproj;
+				$(FilePath)\**\*.vspscc;
+				$(FilePath)\**\*.vssscc;
+				$(FilePath)\*.nuspec;
+				$(FilePath)\**\*.nupkg;
+				$(FilePath)\**\Thumbs.db;
+				$(FilePath)\**\vssver.scc;
+				$(FilePath)\**\packages\**;
+				$(FilePath)\**\.gitignore;
+				$(FilePath)\Project.Targets;
+				$(FilePath)\Custom.Targets;
+				$(FilePath)\*.sln;
+				$(FilePath)\**\.nuget\**;
+				$(FilePath)\**\.octopack\**;
+				$(FilePath)\**\.utilities\**;
+				$(FilePath)\**\BuildInfo.txt;
+				$(FilePath)\**\Quickver.txt;
+			</ExcludeFilter>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<PackageProjectWebFiles
+				Include="$(IncludeFilter)" 
+				Exclude="$(ExcludeFilter)" 
+			/>
+		</ItemGroup>
+		<MakeDir Directories="$(PackagePathTarget)\"/>
+		
+		<MSBuild.ExtensionPack.Compression.Zip 
+			TaskAction="Create" 
+			CompressFiles="@(PackageProjectWebFiles)" 
+			ZipFileName="$(PackagePathTarget)\$(PackageZipName)_$(AssemblyFileVersion_FULL)_($(Configuration)).zip"
+			RemoveRoot="$(ProjectPath)"
+		/>
+
+		<!-- ***** OctoPack Add-On ***** -->
+				<PropertyGroup Condition="$(RunOctoPack)=='true'">
+					<TempFolder>$(SolutionPath)\Temp\Octo</TempFolder>
+				</PropertyGroup>
+				
+				<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+						 Targets="OctoPackAddon" 
+						 Properties="RunOctoPack_Pre=True;TempFolder=$(TempFolder)"
+						 Condition="$(RunOctoPack)=='true'"
+				/>
+				<Copy SourceFiles="@(PackageProjectWebFiles)" 
+					  DestinationFolder="$(TempFolder)\%(RecursiveDir)" 
+					  Condition="$(RunOctoPack)=='true'"
+				/>
+				<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+						 Targets="OctoPackAddon" 
+						 Properties="RunOctoPack_Post=True;TempFolder=$(TempFolder);PackageZipName=$(PackageZipName)"
+						 Condition="$(RunOctoPack)=='true'"
+				/>
+		<!-- *************************** -->
+	</Target>
+	
+	<Target Name="PackageProjectWebSplitSite" DependsOnTargets="GetVersionNumberFromFile" Condition="'$(PackageProjectName)' != ''">
+		<PropertyGroup>
+			<!-- Name of the solution to be compiled without the .sln extension -->
+			<PackageProjectName>$(PackageProjectName)</PackageProjectName>
+			<!-- Name of the zip file -->
+			<PackageZipName Condition="'$(PackageZipOverride)' == ''">$(PackageProjectName)-Site</PackageZipName>
+			<PackageZipName Condition="'$(PackageZipOverride)' != ''">$(PackageZipOverride)-Site</PackageZipName>
+			
+			<!-- Path where the solution file is located (.sln) -->
+			<SolutionPath>%(SolutionRoot.FullPath)</SolutionPath>
+			<!-- Path where the project files are located -->
+			<ProjectPath Condition="'$(PackageProjectSubFolder)' == ''">$(SolutionPath)\$(PackageProjectName)\</ProjectPath>
+			<ProjectPath Condition="'$(PackageProjectSubFolder)' != ''">$(SolutionPath)\$(PackageProjectSubFolder)\$(PackageProjectName)\</ProjectPath>
+
+			<!-- Location of compiled files -->
+			<FilePath Condition="$(Configuration)=='Debug'">$(ProjectPath)</FilePath>
+			<FilePath Condition="$(Configuration)=='Release'">$(ProjectPath)</FilePath>	
+
+			<!-- Path where the nightly zip file will be copied -->
+			<PackagePathTarget>$(BuildArtifacts)\packages\$(Configuration)</PackagePathTarget>		
+
+			<StringDate>$([System.DateTime]::Now.ToString('yyyy-MM-dd'))</StringDate>
+
+			<!-- List of files that will be included in the package -->
+			<!-- Release -->
+			<IncludeFilter Condition="$(Configuration)=='Release'">
+				$(FilePath)\**\*.*
+			</IncludeFilter>
+			<!-- Debug -->
+			<IncludeFilter Condition="$(Configuration)=='Debug'">
+				$(FilePath)\**\*.*
+			</IncludeFilter>
+
+			<!-- List of files that will be excluded from the package -->
+			<!-- Release -->
+			<ExcludeFilter Condition="$(Configuration)=='Release'">
+				$(FilePath)\**\*.cs;
+				$(FilePath)\**\*.user;
+				$(FilePath)\**\*.exp;
+				$(FilePath)\**\obj\**;
+				$(FilePath)\**\migrations\**;
+				$(FilePath)\**\Properties\**;
+				$(FilePath)\packages.config;
+				$(FilePath)\*.csproj;
+				$(FilePath)\**\*.vspscc;
+				$(FilePath)\**\*.vssscc;
+				$(FilePath)\*.nuspec;
+				$(FilePath)\**\*.nupkg;
+				$(FilePath)\**\Thumbs.db;
+				$(FilePath)\**\vssver.scc;
+				$(FilePath)\**\packages\**;
+				$(FilePath)\**\.gitignore;
+				$(FilePath)\Project.Targets;
+				$(FilePath)\Custom.Targets;
+				$(FilePath)\*.sln;
+				$(FilePath)\**\.nuget\**;
+				$(FilePath)\**\.octopack\**;
+				$(FilePath)\**\.utilities\**;
+				$(FilePath)\**\BuildInfo.txt;
+				$(FilePath)\**\*.jpg;
+				$(FilePath)\**\*.gif;
+				$(FilePath)\**\*.png;
+				$(FilePath)\**\*.psd;
+				$(FilePath)\**\*.flv;
+				$(FilePath)\**\*.mp4;
+				$(FilePath)\**\*.swf;
+			</ExcludeFilter>
+			<!-- Debug -->
+			<ExcludeFilter Condition="$(Configuration)=='Debug'">
+				$(FilePath)\**\*.cs;
+				$(FilePath)\**\*.user;
+				$(FilePath)\**\*.exp;
+				$(FilePath)\**\obj\**;
+				$(FilePath)\**\migrations\**;
+				$(FilePath)\**\Properties\**;
+				$(FilePath)\packages.config;
+				$(FilePath)\*.csproj;
+				$(FilePath)\**\*.vspscc;
+				$(FilePath)\**\*.vssscc;
+				$(FilePath)\*.nuspec;
+				$(FilePath)\**\*.nupkg;
+				$(FilePath)\**\Thumbs.db;
+				$(FilePath)\**\vssver.scc;
+				$(FilePath)\**\packages\**;
+				$(FilePath)\**\.gitignore;
+				$(FilePath)\Project.Targets;
+				$(FilePath)\Custom.Targets;
+				$(FilePath)\*.sln;
+				$(FilePath)\**\.nuget\**;
+				$(FilePath)\**\.octopack\**;
+				$(FilePath)\**\.utilities\**;
+				$(FilePath)\**\BuildInfo.txt;
+				$(FilePath)\**\*.jpg;
+				$(FilePath)\**\*.gif;
+				$(FilePath)\**\*.png;
+				$(FilePath)\**\*.psd;
+				$(FilePath)\**\*.flv;
+				$(FilePath)\**\*.mp4;
+				$(FilePath)\**\*.swf;
+			</ExcludeFilter>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<PackageProjectWebSplitSiteFiles
+				Include="$(IncludeFilter)" 
+				Exclude="$(ExcludeFilter)" 
+			/>
+		</ItemGroup>
+		<MakeDir Directories="$(PackagePathTarget)\"/>
+		
+		<MSBuild.ExtensionPack.Compression.Zip 
+			TaskAction="Create" 
+			CompressFiles="@(PackageProjectWebSplitSiteFiles)" 
+			ZipFileName="$(PackagePathTarget)\$(PackageZipName)_$(AssemblyFileVersion_FULL)_($(Configuration)).zip"
+			RemoveRoot="$(ProjectPath)"
+		/>
+
+		<!-- ***** OctoPack Add-On ***** -->
+				<PropertyGroup Condition="$(RunOctoPack)=='true'">
+					<TempFolder>$(SolutionPath)\Temp\Octo</TempFolder>
+				</PropertyGroup>
+				
+				<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+						 Targets="OctoPackAddon" 
+						 Properties="RunOctoPack_Pre=True;TempFolder=$(TempFolder)"
+						 Condition="$(RunOctoPack)=='true'"
+				/>
+				<Copy SourceFiles="@(PackageProjectWebSplitSiteFiles)" 
+					  DestinationFolder="$(TempFolder)\%(RecursiveDir)" 
+					  Condition="$(RunOctoPack)=='true'"
+				/>
+				<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+						 Targets="OctoPackAddon" 
+						 Properties="RunOctoPack_Post=True;TempFolder=$(TempFolder);PackageZipName=$(PackageZipName)"
+						 Condition="$(RunOctoPack)=='true'"
+				/>
+		<!-- *************************** -->
+	</Target>
+	
+	<Target Name="PackageProjectWebSplitImages" DependsOnTargets="GetVersionNumberFromFile" Condition="'$(PackageProjectName)' != ''">
+		<PropertyGroup>
+			<!-- Name of the solution to be compiled without the .sln extension -->
+			<PackageProjectName>$(PackageProjectName)</PackageProjectName>
+			<!-- Name of the zip file -->
+			<PackageZipName Condition="'$(PackageZipOverride)' == ''">$(PackageProjectName)-Images</PackageZipName>
+			<PackageZipName Condition="'$(PackageZipOverride)' != ''">$(PackageZipOverride)-Images</PackageZipName>
+			
+			<!-- Path where the solution file is located (.sln) -->
+			<SolutionPath>%(SolutionRoot.FullPath)</SolutionPath>
+			<!-- Path where the project files are located -->
+			<ProjectPath Condition="'$(PackageProjectSubFolder)' == ''">$(SolutionPath)\$(PackageProjectName)\</ProjectPath>
+			<ProjectPath Condition="'$(PackageProjectSubFolder)' != ''">$(SolutionPath)\$(PackageProjectSubFolder)\$(PackageProjectName)\</ProjectPath>
+
+			<!-- Location of compiled files -->
+			<FilePath Condition="$(Configuration)=='Debug'">$(ProjectPath)</FilePath>
+			<FilePath Condition="$(Configuration)=='Release'">$(ProjectPath)</FilePath>	
+
+			<!-- Path where the nightly zip file will be copied -->
+			<PackagePathTarget>$(BuildArtifacts)\packages\$(Configuration)</PackagePathTarget>		
+
+			<StringDate>$([System.DateTime]::Now.ToString('yyyy-MM-dd'))</StringDate>
+
+			<!-- List of files that will be included in the package -->
+			<!-- Release -->
+			<IncludeFilter Condition="$(Configuration)=='Release'">
+				$(FilePath)\**\*.jpg;
+				$(FilePath)\**\*.gif;
+				$(FilePath)\**\*.png;
+				$(FilePath)\**\*.psd;
+				$(FilePath)\**\*.flv;
+				$(FilePath)\**\*.mp4;
+				$(FilePath)\**\*.swf;
+			</IncludeFilter>
+			<!-- Debug -->
+			<IncludeFilter Condition="$(Configuration)=='Debug'">
+				$(FilePath)\**\*.jpg;
+				$(FilePath)\**\*.gif;
+				$(FilePath)\**\*.png;
+				$(FilePath)\**\*.psd;
+				$(FilePath)\**\*.flv;
+				$(FilePath)\**\*.mp4;
+				$(FilePath)\**\*.swf;
+			</IncludeFilter>
+
+			<!-- List of files that will be excluded from the package -->
+			<!-- Release -->
+			<ExcludeFilter Condition="$(Configuration)=='Release'">
+				<!-- $(FilePath)\**\*.* -->
+			</ExcludeFilter>
+			<!-- Debug -->
+			<ExcludeFilter Condition="$(Configuration)=='Debug'">
+				<!--$(FilePath)\**\*.*-->
+			</ExcludeFilter>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<PackageProjectWebSplitImagesFiles
+				Include="$(IncludeFilter)" 
+				Exclude="$(ExcludeFilter)" 
+			/>
+		</ItemGroup>
+		
+		<MakeDir Directories="$(PackagePathTarget)\"/>
+		
+		<MSBuild.ExtensionPack.Compression.Zip 
+			TaskAction="Create" 
+			CompressFiles="@(PackageProjectWebSplitImagesFiles)" 
+			ZipFileName="$(PackagePathTarget)\$(PackageZipName)_$(AssemblyFileVersion_FULL)_($(Configuration)).zip"
+			RemoveRoot="$(ProjectPath)"
+		/>
+
+		<!-- ***** OctoPack Add-On ***** -->
+				<PropertyGroup Condition="$(RunOctoPack)=='true'">
+					<TempFolder>$(SolutionPath)\Temp\Octo</TempFolder>
+				</PropertyGroup>
+				
+				<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+						 Targets="OctoPackAddon" 
+						 Properties="RunOctoPack_Pre=True;TempFolder=$(TempFolder)"
+						 Condition="$(RunOctoPack)=='true'"
+				/>
+				<Copy SourceFiles="@(PackageProjectWebSplitImagesFiles)" 
+					  DestinationFolder="$(TempFolder)\%(RecursiveDir)" 
+					  Condition="$(RunOctoPack)=='true'"
+				/>
+				<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+						 Targets="OctoPackAddon" 
+						 Properties="RunOctoPack_Post=True;TempFolder=$(TempFolder);PackageZipName=$(PackageZipName)"
+						 Condition="$(RunOctoPack)=='true'"
+				/>
+		<!-- *************************** -->
+	</Target>
+	
+	<Target Name="PackageApp" DependsOnTargets="GetVersionNumberFromFile" Condition="'$(PackageProjectName)' != ''">
+		<PropertyGroup>
+			<!-- Name of the solution to be compiled without the .sln extension -->
+			<PackageProjectName>$(PackageProjectName)</PackageProjectName>
+			<!-- Name of the zip file -->
+			<PackageZipName Condition="'$(PackageZipOverride)' == ''">$(PackageProjectName)</PackageZipName>
+			<PackageZipName Condition="'$(PackageZipOverride)' != ''">$(PackageZipOverride)</PackageZipName>
+
+			<!-- Path where the solution file is located (.sln) -->
+			<SolutionPath>%(SolutionRoot.FullPath)</SolutionPath>
+			<!-- Path where the project files are located -->
+			<ProjectPath Condition="'$(PackageProjectSubFolder)' == ''">$(SolutionPath)\$(PackageProjectName)\bin</ProjectPath>
+			<ProjectPath Condition="'$(PackageProjectSubFolder)' != ''">$(SolutionPath)\$(PackageProjectSubFolder)\$(PackageProjectName)\bin</ProjectPath>
+
+			<ProjectPath Condition="'$(PackageProjectSubFolder)' == '' AND $(Platform) !='' ">$(SolutionPath)\$(PackageProjectName)\bin\$(Platform)</ProjectPath>
+			<ProjectPath Condition="'$(PackageProjectSubFolder)' != '' AND $(Platform) !='' ">$(SolutionPath)\$(PackageProjectSubFolder)\$(PackageProjectName)\bin\$(Platform)</ProjectPath>			
+			
+			<!-- Location of compiled files -->
+			<FilePath Condition="$(Configuration)=='Debug'">$(ProjectPath)\$(Configuration)</FilePath>
+			<FilePath Condition="$(Configuration)=='Release'">$(ProjectPath)\$(Configuration)</FilePath>	
+
+			<!-- Path where the nightly zip file will be copied -->
+			<PackagePathTarget>$(BuildArtifacts)\packages\$(Configuration)</PackagePathTarget>		
+
+			<StringDate>$([System.DateTime]::Now.ToString('yyyy-MM-dd'))</StringDate>
+
+			<!-- List of files that will be included in the package -->
+			<!-- Release -->
+			<IncludeFilter Condition="$(Configuration)=='Release'">
+				$(FilePath)\**\*.*
+			</IncludeFilter>
+			<!-- Debug -->
+			<IncludeFilter Condition="$(Configuration)=='Debug'">
+				$(FilePath)\**\*.*
+			</IncludeFilter>
+
+			<!-- List of files that will be excluded from the package -->
+			<!-- Release -->
+			<ExcludeFilter Condition="$(Configuration)=='Release'">
+				$(FilePath)\**\*.cs;
+				$(FilePath)\**\*.user;
+				$(FilePath)\**\*.exp;
+				$(FilePath)\**\obj\**;
+				$(FilePath)\**\migrations\**;
+				$(FilePath)\**\Properties\**;
+				$(FilePath)\packages.config;
+				$(FilePath)\*.csproj;
+				$(FilePath)\*.vspscc;
+				$(FilePath)\*.nuspec;
+				$(FilePath)\**\*.nupkg;
+				$(FilePath)\**\Thumbs.db;
+				$(FilePath)\**\*.vspscc;
+				$(FilePath)\**\*.vssscc;
+				$(FilePath)\**\*.pdb;
+				$(FilePath)\**\packages\**;
+				$(FilePath)\**\.gitignore;
+				$(FilePath)\Project.Targets;
+				$(FilePath)\Custom.Targets;
+				$(FilePath)\*.sln;
+				$(FilePath)\**\.nuget\**;
+				$(FilePath)\**\.octopack\**;
+				$(FilePath)\**\.utilities\**;
+				$(FilePath)\**\BuildInfo.txt;
+				$(FilePath)\**\Quickver.txt;
+			</ExcludeFilter>
+			<!-- Debug -->
+			<ExcludeFilter Condition="$(Configuration)=='Debug'">
+				$(FilePath)\**\*.cs;
+				$(FilePath)\**\*.user;
+				$(FilePath)\**\*.exp;
+				$(FilePath)\**\obj\**;
+				$(FilePath)\**\migrations\**;
+				$(FilePath)\**\Properties\**;
+				$(FilePath)\packages.config;
+				$(FilePath)\*.csproj;
+				$(FilePath)\**\*.vspscc;
+				$(FilePath)\**\*.vssscc;
+				$(FilePath)\*.nuspec;
+				$(FilePath)\**\*.nupkg;
+				$(FilePath)\**\Thumbs.db;
+				$(FilePath)\**\vssver.scc;
+				$(FilePath)\**\packages\**;
+				$(FilePath)\**\.gitignore;
+				$(FilePath)\Project.Targets;
+				$(FilePath)\Custom.Targets;
+				$(FilePath)\*.sln;
+				$(FilePath)\**\.nuget\**;
+				$(FilePath)\**\.octopack\**;
+				$(FilePath)\**\.utilities\**;
+				$(FilePath)\**\BuildInfo.txt;
+				$(FilePath)\**\Quickver.txt;
+			</ExcludeFilter>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<PackageAppFiles 
+				Include="$(IncludeFilter)" 
+				Exclude="$(ExcludeFilter)" 
+			/>
+		</ItemGroup>
+
+		<Message Text="Configuration: $(Configuration)"
+				 Importance="high"/>
+
+		<MakeDir Directories="$(PackagePathTarget)"/>
+		
+		<!-- Notes: RemoveRoot property, this property sets the root to remove from the compress files path. -->
+		
+		<!-- <Message Text="Compress Files: @(PackageAppFiles)"/> --> <!-- Debug -->
+		
+		<MSBuild.ExtensionPack.Compression.Zip 
+			TaskAction="Create" 
+			CompressFiles="@(PackageAppFiles)" 
+			ZipFileName="$(PackagePathTarget)\$(PackageZipName)_$(AssemblyFileVersion_FULL)_($(Configuration)).zip"
+			RemoveRoot="$(FilePath)"
+		/>
+
+		<!-- ***** OctoPack Add-On ***** -->
+				<PropertyGroup Condition="$(RunOctoPack)=='true'">
+					<TempFolder>$(SolutionPath)\Temp\Octo</TempFolder>
+				</PropertyGroup>
+				
+				<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+						 Targets="OctoPackAddon" 
+						 Properties="RunOctoPack_Pre=True;TempFolder=$(TempFolder)"
+						 Condition="$(RunOctoPack)=='true'"
+				/>
+				<Copy SourceFiles="@(PackageAppFiles)" 
+					  DestinationFolder="$(TempFolder)\%(RecursiveDir)" 
+					  Condition="$(RunOctoPack)=='true'"
+				/>
+				<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+						 Targets="OctoPackAddon" 
+						 Properties="RunOctoPack_Post=True;TempFolder=$(TempFolder);PackageZipName=$(PackageZipName)"
+						 Condition="$(RunOctoPack)=='true'"
+				/>
+		<!-- *************************** -->
+	</Target>
+	
+	<Target Name="OctoPackAddon" Condition="$(RunOctoPack)=='true'">
+			
+		<!-- 2015-05-12: GS - OctoPack Add-On: Created to allow for us to add the OctoPack option to any standard package system. -->
+		
+		<!-- ***** Target BootStrap ***** -->
+			<!-- ***** OctoPack Add-On ***** -->
+				<!--<PropertyGroup Condition="$(RunOctoPack)=='true'">
+					<TempFolder>$(SolutionPath)\Temp\Octo</TempFolder>
+				</PropertyGroup>
+				
+				<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+						 Targets="OctoPackAddon" 
+						 Properties="RunOctoPack_Pre=True;TempFolder=$(TempFolder)"
+						 Condition="$(RunOctoPack)=='true'"
+				/>
+				<Copy SourceFiles="@(PackageApplicationFiles)" 
+					  DestinationFolder="$(TempFolder)\%(RecursiveDir)" 
+					  Condition="$(RunOctoPack)=='true'"
+				/>
+				<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+						 Targets="OctoPackAddon" 
+						 Properties="RunOctoPack_Post=True;TempFolder=$(TempFolder);PackageZipName=$(PackageZipName)"
+						 Condition="$(RunOctoPack)=='true'"
+				/>-->
+			<!-- *************************** -->
+		<!-- **************************** -->
+			
+			<Exec
+				Command='attrib -R /S $(TempFolder)/*'
+				WorkingDirectory="$(MSBuildProjectDirectory)"
+				Condition="$(RunOctoPack_Pre)=='true'"
+			/>
+			
+			<Exec
+				Command='rmdir /S /Q $(TempFolder)\'
+				WorkingDirectory="$(MSBuildProjectDirectory)"
+				Condition="$(RunOctoPack_Pre)=='true'"
+			/>
+			
+			<Exec
+				Command='md $(TempFolder)\'
+				WorkingDirectory="$(MSBuildProjectDirectory)"
+				Condition="$(RunOctoPack_Pre)=='true'"
+			/>
+			
+			<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+					 Targets="PackageOcto" 
+					 Properties="PackageFolderName=$(PackageZipName);PackageProjectPathOverride=$(TempFolder)\"
+					 Condition="$(RunOctoPack_Post)=='true'"
+			/>
+			
+			<Exec
+				Command='rmdir /S /Q $(TempFolder)\'
+				WorkingDirectory="$(MSBuildProjectDirectory)"
+				Condition="$(RunOctoPack_Post)=='true'"
+			/>
+		
+	</Target>
+	
+	<Target Name="PackageSource" DependsOnTargets="GetVersionNumberFromFile" >
+	</Target>
+	
+	<Target Name="PackageFolder" DependsOnTargets="GetVersionNumberFromFile" Condition="'$(PackageFolderName)' != ''">
+		<PropertyGroup>
+			<!-- Name of the solution to be compiled without the .sln extension -->
+			<PackageFolderName>$(PackageFolderName)</PackageFolderName>
+			<!-- Name of the zip file -->
+			<PackageZipName Condition="'$(PackageZipOverride)' == ''">$(PackageFolderName)</PackageZipName>
+			<PackageZipName Condition="'$(PackageZipOverride)' != ''">$(PackageZipOverride)</PackageZipName>
+
+			<!-- Path where the solution file is located (.sln) -->
+			<SolutionPath>%(SolutionRoot.FullPath)</SolutionPath>
+			<!-- Path where the project files are located -->
+			<ProjectPath Condition="'$(PackageProjectSubFolder)' == ''">$(SolutionPath)\$(PackageFolderName)</ProjectPath>
+			<ProjectPath Condition="'$(PackageProjectSubFolder)' != ''">$(SolutionPath)\$(PackageProjectSubFolder)\$(PackageFolderName)</ProjectPath>
+
+			<!-- Location of compiled files -->
+			<FilePath Condition="$(Configuration)=='Debug'">$(ProjectPath)</FilePath>
+			<FilePath Condition="$(Configuration)=='Release'">$(ProjectPath)</FilePath>	
+
+			<!-- Path where the nightly zip file will be copied -->
+			<PackagePathTarget>$(BuildArtifacts)\packages\$(Configuration)</PackagePathTarget>		
+
+			<StringDate>$([System.DateTime]::Now.ToString('yyyy-MM-dd'))</StringDate>
+
+			<!-- List of files that will be included in the package -->
+			<!-- Release -->
+			<IncludeFilter Condition="$(Configuration)=='Release'">
+				$(FilePath)\**\*.*
+			</IncludeFilter>
+			<!-- Debug -->
+			<IncludeFilter Condition="$(Configuration)=='Debug'">
+				$(FilePath)\**\*.*
+			</IncludeFilter>
+
+			<!-- List of files that will be excluded from the package -->
+			<!-- Release -->
+			<ExcludeFilter Condition="$(Configuration)=='Release'">
+			</ExcludeFilter>
+			<!-- Debug -->
+			<ExcludeFilter Condition="$(Configuration)=='Debug'">
+			</ExcludeFilter>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<PackageFolderFiles 
+				Include="$(IncludeFilter)" 
+				Exclude="$(ExcludeFilter)" 
+			/>
+		</ItemGroup>
+
+		<!-- <Message Text="Compress Files: @(PackageFolderFiles)"/> --> <!-- Debug -->
+		
+		<PropertyGroup>
+			<CompressCheck>@(PackageFolderFiles)</CompressCheck>
+			<CompressStatus Condition="'$(CompressCheck)' == ''">False</CompressStatus>
+			<CompressStatus Condition="'$(CompressCheck)' != ''">True</CompressStatus>
+		</PropertyGroup>
+		
+		<!-- <Message Text="Compress Check: $(CompressCheck)" /> -->
+		<!-- <Message Text="Compress Status: $(CompressStatus)" /> -->
+		
+		<Message Text="Configuration: $(Configuration)"
+				 Importance="high"/>
+
+		<MakeDir Directories="$(PackagePathTarget)"/>
+		
+		<!--<Zip 
+			Files="@(PackageFolderFiles)"
+			WorkingDirectory="$(FilePath)"
+			ZipFileName="$(PackagePathTarget)\$(PackageZipName)_$(AssemblyFileVersion_FULL)_($(Configuration)).zip"
+			ZipLevel="9" 
+		/>-->
+		
+		<!-- Notes: RemoveRoot property, this property sets the root to remove from the compress files path. -->
+
+		<MSBuild.ExtensionPack.Compression.Zip 
+			TaskAction="Create" 
+			CompressFiles="@(PackageFolderFiles)" 
+			ZipFileName="$(PackagePathTarget)\$(PackageZipName)_$(AssemblyFileVersion_FULL)_($(Configuration)).zip"
+			RemoveRoot="$(FilePath)"
+			Condition="'@(PackageFolderFiles)' != ''"
+		/>
+		
+		<!-- ***** OctoPack Add-On ***** -->
+				<PropertyGroup Condition="$(RunOctoPack)=='true'">
+					<TempFolder>$(SolutionPath)\Temp\Octo</TempFolder>
+				</PropertyGroup>
+			<Message Text="OutPack Add-9(PackageFolder)"/>
+				<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+						 Targets="OctoPackAddon" 
+						 Properties="RunOctoPack_Pre=True;TempFolder=$(TempFolder)"
+						 Condition="$(RunOctoPack)=='true'"
+				/>
+				<Copy SourceFiles="@(PackageFolderFiles)" 
+					  DestinationFolder="$(TempFolder)\%(RecursiveDir)" 
+					  Condition="$(RunOctoPack)=='true'"
+				/>
+				<MSBuild Projects ="$(MSBuildProjectFullPath)" 
+						 Targets="OctoPackAddon" 
+						 Properties="RunOctoPack_Post=True;TempFolder=$(TempFolder);PackageZipName=$(PackageZipName)"
+						 Condition="$(RunOctoPack)=='true'"
+				/>
+		<!-- *************************** -->
+		
+	</Target>
+
+	<Target Name="PackageOcto" DependsOnTargets="GetVersionNumberFromFile" Condition="'$(PackageFolderName)' != ''">
+		<!-- Renamed from "BulkPackage" to "PackageNuGetBulk" (2014-10-24)-->
+		<Message Text="PackageOcto - Debug: Package Name: $(PackageName)"/> <!-- Debug-->
+		<Message Text="PackageOcto - Debug: Package Folder Name: $(PackageFolderName)"/> <!--Debug-->
+		<PropertyGroup>
+			<versionRelease Condition="'$(versionRelease)' == ''">$(AssemblyFileVersion_Release)</versionRelease>
+			<PackagePathTarget>$(BuildArtifacts)\OctoPack\$(Configuration)</PackagePathTarget>
+			<!-- Path where the solution file is located (.sln) -->
+			<SolutionPath>%(SolutionRoot.FullPath)</SolutionPath>
+			<!-- Path where the project files are located -->
+			<ProjectPath Condition="'$(PackageProjectSubFolder)' == ''">$(SolutionPath)\$(PackageFolderName)</ProjectPath>
+			<ProjectPath Condition="'$(PackageProjectSubFolder)' != ''">$(SolutionPath)\$(PackageProjectSubFolder)\$(PackageFolderName)</ProjectPath>
+			<ProjectPath Condition="'$(PackageProjectPathOverride)' != ''">$(PackageProjectPathOverride)</ProjectPath>
+			<PackageName_INT Condition="'$(PackageName)' == ''">$(PackageFolderName)</PackageName_INT>
+			<PackageName_INT Condition="'$(PackageName)' != ''">$(PackageName)</PackageName_INT>
+			<PackageVersion_INT Condition="'$(OctoPackPackageVersion)' != ''">$(OctoPackPackageVersion)</PackageVersion_INT>
+			<PackageVersion_INT Condition="'$(OctoPackPackageVersion)' == ''">$(AssemblyFileVersion_FULL)</PackageVersion_INT>
+			<PackageVersion_INT Condition="'$(OctoPackTag)' != ''">$(PackageVersion_INT)-$OctoPackTag</PackageVersion_INT>
+		</PropertyGroup>
+		<Message Text="OctoPackPackageVersion: $(PackageVersion_INT)" />
+		<PropertyGroup>
+			<OctoPackParameters>pack --id=$(PackageName_INT)^
+				--version=$(PackageVersion_INT)^
+				--basepath=$(ProjectPath)^
+				--outfolder=$(PackagePathTarget)^
+				--overwrite^
+			</OctoPackParameters>
+		</PropertyGroup>
+		<Exec
+			Command="&quot;$(MSBuildProjectDirectory)\.octopack\Octo.exe&quot; $(OctoPackParameters)"
+			Condition="Exists('$(ProjectPath)')"
+		/>
+		
+	</Target>
+	
+	<Target Name="Archive">
+		<PropertyGroup>
+		</PropertyGroup>
+
+		<CallTarget Targets="ArchiveGeneric" Condition="$(ArchiveType) == 'Generic'" />
+		<CallTarget Targets="ArchiveOctoPack" Condition="$(ArchiveType) == 'OctoPack'" />
+
+	</Target>
+
+	<Target Name="ArchiveGeneric">
+		<PropertyGroup>
+			<ArchiveSource Condition="'$(ArchiveSource)' == ''">%(SolutionRoot.FullPath)</ArchiveSource>
+			<ArchiveSource Condition="'$(ArchiveSource)' != ''">$(ArchiveSource)</ArchiveSource>
+			<ArchiveFiles Condition="'$(ArchiveFiles)' == ''">*.*</ArchiveFiles>
+			<ArchiveTarget Condition="'$(ArchiveTarget)' == ''">$(BuildArtifacts)\Generic\$(Configuration)</ArchiveTarget>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<ArchiveFileScan Include="$(ArchiveSource)\$(ArchiveFiles)"/>
+		</ItemGroup>
+
+		<Message Text="%0aArchive Source: $(ArchiveSource)%0aArtifacts Target: $(ArchiveTarget)%0a" />
+
+		<Exec 
+			Command='md "$(ArchiveTarget)"'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+			Condition="!Exists('$(ArchiveTarget)')"
+		/>
+
+		<Exec 
+			Command='xcopy /S /Y $(ArchiveSource)\$(ArchiveFiles) "$(ArchiveTarget)\"'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+			Condition="Exists('%(ArchiveFileScan.FullPath)')"
+		/>
+	</Target>
+
+	<Target Name="ArchiveOctoPack">
+		<PropertyGroup>
+			<ArchiveSource Condition="'$(ArchiveSource)' == ''">%(SolutionRoot.FullPath)</ArchiveSource>
+			<ArchiveSource Condition="'$(ArchiveSource)' != ''">$(ArchiveSource)</ArchiveSource>
+			<ArchiveFiles Condition="'$(ArchiveFiles)' == ''">*.nupkg</ArchiveFiles>
+			<ArchiveTarget Condition="'$(ArchiveTarget)' == ''">$(BuildArtifacts)\OctoPack\$(Configuration)</ArchiveTarget>
+		</PropertyGroup>
+
+		<ItemGroup>
+			<ArchiveFileScan Include="$(ArchiveSource)\$(ArchiveFiles)"/>
+		</ItemGroup>
+
+		<Message Text="%0aArchive Source: $(ArchiveSource)%0aArtifacts Target: $(ArchiveTarget)%0a" />
+
+		<Exec 
+			Command='md "$(ArchiveTarget)"'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+			Condition="!Exists('$(ArchiveTarget)')"
+		/>
+
+		<Exec 
+			Command='xcopy /S /Y $(ArchiveSource)\$(ArchiveFiles) "$(ArchiveTarget)\"'
+			WorkingDirectory='%(SolutionRoot.FullPath)'
+			Condition="Exists('%(ArchiveFileScan.FullPath)')"
+		/>
+	</Target>
+	
+	<Target Name="ABS_InfoCurrent">
+		<!-- Read version of project.targets -->
+		<ReadLinesFromFile File="$(ABSThisFileFullPath)">
+			<Output TaskParameter="Lines"
+					ItemName="ItemsFromFile"/>
+		</ReadLinesFromFile>
+
+		<PropertyGroup>
+			<Pattern>Version:\s(\d+).(\d+).(\d+)</Pattern>
+			<In>@(ItemsFromFile)</In>
+			<Version_Out>$([System.Text.RegularExpressions.Regex]::Match($(In), $(Pattern)))</Version_Out>
+		</PropertyGroup>
+
+		<PropertyGroup>
+			<Pattern>Updated:\s(\d+).(\d+).(\d+)</Pattern>
+			<In>@(ItemsFromFile)</In>
+			<Date_Out>$([System.Text.RegularExpressions.Regex]::Match($(In), $(Pattern)))</Date_Out>
+		</PropertyGroup>
+		
+		<PropertyGroup>
+			<Pattern>(ABSType:)\s([A-Za-z]+)</Pattern>
+			<In>@(ItemsFromFile)</In>
+			<Type_Out>$([System.Text.RegularExpressions.Regex]::Match($(In), $(Pattern)))</Type_Out>
+		</PropertyGroup>
+		
+		<PropertyGroup>
+			<ABS_BuildString>$(Version_Out.Split(':')[1])</ABS_BuildString>
+			<ABS_BuildNumber>$(ABS_BuildString.Trim())</ABS_BuildNumber>
+			<ABS_Major>$(ABS_BuildNumber.Split('.')[0])</ABS_Major>
+			<ABS_Minor>$(ABS_BuildNumber.Split('.')[1])</ABS_Minor>
+			<ABS_Patch>$(ABS_BuildNumber.Split('.')[2])</ABS_Patch>
+		</PropertyGroup>
+		
+		<PropertyGroup>
+			<ABS_DateString>$(Date_Out.Split(':')[1])</ABS_DateString>
+			<ABS_Date>$(ABS_DateString.Trim())</ABS_Date>
+			<ABS_Year>$(ABS_Date.Split('-')[0])</ABS_Year>
+			<ABS_Month>$(ABS_Date.Split('-')[1])</ABS_Month>
+			<ABS_Day>$(ABS_Date.Split('-')[2])</ABS_Day>
+		</PropertyGroup>
+		
+		<PropertyGroup>
+			<ABS_TypeString>$(Type_Out.Split(':')[1])</ABS_TypeString>
+			<ABS_Type>$(ABS_TypeString.Trim())</ABS_Type>
+		</PropertyGroup>
+		
+		<Message text="Build Script Version: $(ABS_BuildNumber)" />
+		<Message Text="Date: $(ABS_Date)"/>
+		<Message Text="Type: $(ABS_Type)"/>
+		<!--
+		<Message text="********************" />
+		<Message text="Debug:" />
+		<Message Text=" "/>
+		<Message Text="Version Settings"/>
+		<Message text="ABS Major: $(ABS_Major)" />
+		<Message text="ABS Minor: $(ABS_Minor)" />
+		<Message text="ABS_Patch: $(ABS_Patch)" />
+		<Message Text=" "/>
+		<Message Text="Date Settings"/>
+		<Message text="ABS_Year: $(ABS_Year)" />
+		<Message text="ABS_Month: $(ABS_Month)" />
+		<Message text="ABS_Day: $(ABS_Day)" />
+		<Message text="********************" />
+		-->
+	</Target>
+	
+	<Target Name="GenerateNewGuid">
+		<PropertyGroup>
+		<GenerateGuid>
+		<![CDATA[
+		public static string ScriptMain() {
+		return System.Guid.NewGuid().ToString().ToUpper();
+		}
+		]]>
+		</GenerateGuid>
+		</PropertyGroup>
+		 
+		<Script Language="C#" Code="$(GenerateGuid)">
+		<Output TaskParameter="ReturnValue" PropertyName="NewGuid" />
+		</Script>
+
+		<Message Text="Guid: $(NewGuid)" />
+
+		<PropertyGroup>
+			<ShortGuid>$(NewGuid.Replace('-',''))</ShortGuid>
+		</PropertyGroup>
+
+		<Message Text="Short Guid: $(ShortGuid)" />
+
+	</Target>
+	
+	<Target Name="nDepend" Condition="'$(nDepend_Status)' == 'true'">
+		<!-- 2015-06-05: Create Shell Prototype -->
+		<PropertyGroup>
+			<nDependTarget>$(MSBuildProjectDirectory)\bin\$(Configuration)</nDependTarget>
+			<nDependReport>$(BuildArtifacts)\nDepend\Analysis</nDependReport>
+			<dotNetFrameworkPaths>C:\Windows\Microsoft.NET\Framework\v4.0.30319 C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF</dotNetFrameworkPaths>
+		</PropertyGroup>
+		
+		<ItemGroup> <!-- Solution Configuration -->
+			<nDependProject Include="*.ndproj" Exclude="$(CustomnDependExclude)" />
+			<nDependRoot Include="."/>
+		</ItemGroup>
+
+		<Message Text='"$(nDependApp)" %(nDependProject.FullPath) /OutDir $(nDependReport) /InDirs $(dotNetFrameworkPaths) $(nDependTarget)' Condition='$(DebugMsg) == True'/> <!-- Debug -->
+		
+		<Exec 
+			Command='"$(nDependApp)" %(nDependProject.FullPath) /OutDir $(nDependReport) /InDirs $(dotNetFrameworkPaths) $(nDependTarget)' 
+			Condition="Exists('%(nDependProject.FullPath)')"
+			ContinueOnError="True"
+		/>
+	</Target>
+	
+	<Target Name="dosKeys">
+	<!--
+		<Exec Command='@DOSKEY InstallNuget=msbuild project.targets /t:InstallNugetPackages' />
+		<Exec Command='@DOSKEY UpdateNuget=msbuild project.targets /t:UpdateNugetConfig' />
+		<Exec Command='@DOSKEY ReadNuget=msbuild project.targets /t:ReadNugetConfig' />
+		<Exec Command='@DOSKEY AddNuget=msbuild project.targets /t:AddNugetConfig' />
+		
+		<Exec Command='@DOSKEY EditNugetConfig=notepad .nuget\nuget.config' />
+		<Exec Command='@DOSKEY EditNuget=EditNugetConfig' />
+		
+		<Exec Command='@DOSKEY EditBuild=notepad project.targets' />
+		
+		<Exec Command='@DOSKEY Build=msbuild project.targets /t:Build $*' />
+		<Exec Command='@DOSKEY BuildOctoPack=msbuild project.targets /t:Build /p:RunOctoPack=True $*' />
+		<Exec Command='@DOSKEY Package=msbuild project.targets /t:Package $*' />
+		<Exec Command='@DOSKEY CustomPackageAll=msbuild project.targets /t:CustomPackageAll $*' />
+		
+		<Exec Command='@DOSKEY BuildInfo=msbuild project.targets /t:Info $*' />
+	-->
+	</Target>
+	
+	<Target Name="Get-Date" >
+		<!-- http://stackoverflow.com/questions/878037/msbuild-msbuildcommunitytasks-task-time 
+		
+		$(ABS_BuildString.Trim())
+		-->
+		<PropertyGroup> 
+			<ISOYear_Raw>$([System.DateTime]::Now.ToString(`yyyy`)) </ISOYear_Raw>
+			<ISOMonth_Raw>$([System.DateTime]::Now.ToString(`MM`)) </ISOMonth_Raw>
+			<ISODay_Raw>$([System.DateTime]::Now.ToString(`dd`)) </ISODay_Raw>
+			
+			<ISOYear>$(ISOYear_Raw.Trim())</ISOYear>
+			<ISOMonth>$(ISOMonth_Raw.Trim())</ISOMonth>
+			<ISODay>$(ISODay_Raw.Trim())</ISODay>
+		</PropertyGroup>
+		
+		<Message Text = "Year: $(ISOYear)" />
+		<Message Text = "Month: $(ISOMonth)" />
+		<Message Text = "Day: $(ISODay)" />
+	</Target>
+	
+	<Target Name="ScratchSpace" DependsOnTargets="NuGetPackageSettings;GetVersionNumberFromFile;Get-Date" > 
+	
+		<PropertyGroup>
+			<PublishArtifactsPathRemote>$(BuildArtifactsServerRemote)\TeamCity\$(BuildType)\$(ProjectName)\$(AssemblyFileVersion_Release)\$(AssemblyFileVersion_FULL)\</PublishArtifactsPathRemote>
+			<PublishArtifactsPathRemote Condition="'$(BuildType)' == 'Nightly'">$(BuildArtifactsServerRemote)\TeamCity\$(BuildType)\$(ISOYear)\$(ISOMonth)\$(ISODay)\$(ProjectName)\$(AssemblyFileVersion_Release)\$(AssemblyFileVersion_FULL)\</PublishArtifactsPathRemote>
+		</PropertyGroup>
+		<Message Text = "Build Type: $(BuildType)" />
+		<Message Text = "Publish Artifacts Path Remote: $(PublishArtifactsPathRemote)" />
+	</Target>
+	
+</Project>

@@ -1,0 +1,70 @@
+﻿<div class="screen padded">
+    <div id="contactInfo" class="padding">
+        <form name="contactForm" ng-submit="contact.submitForm(contactForm.$valid)" novalidate>
+            <div class="form-group">
+                <label class="item item-input">Who's Picking Up? *</label>
+                <div class="form-split">
+                    <input class="form-control padded" type="text" placeholder="First Name" name="FirstName" ng-model="contact.user.FirstName" required maxlength="50">
+                    <!--<p ng-show="(contactForm.FirstName.$invalid && !contactForm.FirstName.$pristine)" class="padded bg-danger">Your first name is required.</p>-->
+                    <p ng-show="(contactForm.FirstName.$error.required && !contactForm.FirstName.$pristine)" class="padded bg-danger">First Name is mandatory.</p>
+                </div>
+                <div>
+                    <input class="form-control" type="text" placeholder="Last Name" name="LastName" ng-model="contact.user.LastName" required maxlength="50">
+                    <!--<p ng-show="(contactForm.LastName.$invalid && !contactForm.LastName.$pristine)" class="padded bg-danger">Your last name is required.</p>-->
+                    <p ng-show="(contactForm.LastName.$error.required && !contactForm.LastName.$pristine)" class="padded bg-danger">Last Name is mandatory.</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="item item-input">Email Address *</label>
+                <!--#AZ: Commented  below-->
+                <!--<input class="form-control padded" type="email" placeholder="Email" ng-model="contact.user.EmailAddress" required maxlength="80" />-->
+                <input class="form-control padded" type="email" placeholder="Email" name="EmailAddress" ng-model="contact.user.EmailAddress" ng-pattern="/^[\w\-\.\+]+\@[a-zA-Z0-9\.\-]+\.[a-zA-z0-9]{2,4}$/" required maxlength="80" />
+                <p ng-show="contactForm.EmailAddress.$error.required && !contactForm.EmailAddress.$pristine" class="padded bg-danger">Email is a mandatory.</p>
+                <p ng-show="contactForm.EmailAddress.$invalid && !contactForm.EmailAddress.$pristine && !contactForm.EmailAddress.$error.required" class="padded bg-danger">Provide a valid email.</p>
+            </div>
+            <div class="form-group">
+                <label class="item item-input">Phone Number *</label>
+                <!--#AZ: Commented  below-->
+                <!--<input class="form-control" type="text" placeholder="Phone" ng-model="contact.user.PhoneNumber" required maxlength="20">-->
+                <!--Sample Phone No.
+                1444-555-1234
+                1-444-555-1234
+                14325678901
+                1(123)456-7890
+                +1 246.555-8888
+                +1 (123)456-7890
+                +1(123)456-7890-->
+                <input class="form-control" type="text" placeholder="Phone" name="PhoneNumber" ng-pattern="/^[+]?[0-9]{0,1}[-. ]?\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/" ng-model="contact.user.PhoneNumber" required maxlength="20">
+                <p ng-show="!contactForm.PhoneNumber.$pristine && contactForm.PhoneNumber.$error.required" class="padded bg-danger">Phone No. is mandatory.</p>
+                <p ng-show="contactForm.PhoneNumber.$invalid && !contactForm.PhoneNumber.$pristine && !contactForm.PhoneNumber.$error.required" class="padded bg-danger">Provide a valid US/Canada phone number.</p>
+            </div>
+            <p class="data-loading">* required field</p>
+            <div class="form-group terms-conditions">
+                <!-- Removed by Umair's request 6/1
+                <label class="checkbox" data-ng-if="contact.storageSupported">
+                    <input type="checkbox" data-ng-model="contact.rememberMe"/>
+                    <p>Remember pickup information for future orders</p>
+                </label>
+                -->
+                <label class="checkbox">
+                    <input ng-model="contact.iAgree" type="checkbox" required>
+                    I have read and agree to Staples Copy &amp; Print
+                    <a href="http://www.staples.com/sbd/content/help-center/policies-and-legal.html#10008_3" target="_blank">terms and conditions</a>
+                    &nbsp;&amp;&nbsp;
+                    <a href="http://www.staples.com/sbd/content/help-center/policies-and-legal.html#10008_2" target="_blank">privacy policies</a>
+                </label>
+            </div>
+            <p class="terms-conditions">Payment due when you pick up your order.</p>
+            <div class="form-group">
+            </div>
+        </form>
+        <pni-pricing></pni-pricing>
+        <div class="pull-right clearfix">
+            <a ng-click='contact.next()'>Order Preview</a>
+        </div>
+        <div class="pull-right anchored-footer clearfix">
+            <button ng-click='contact.back()' class="btn btn-action btn-grey">Back</button>
+            <button class="btn-action btn btn-staples" ng-click="contact.submitForm(contactForm.$valid)" ng-disabled="contactForm.$invalid">Order Now</button>
+        </div>
+    </div>
+</div>

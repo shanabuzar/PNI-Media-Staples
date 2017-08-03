@@ -1,0 +1,31 @@
+﻿<div ng-controller="MasterController as master">
+    <div class="backdrop" ng-show="master.loading">
+        <div id="loadSpinner">
+            <img src="{{master.base}}style/images/spinner.gif" alt="" />
+            <span ng-cloak>Loading...</span>
+        </div>
+    </div>
+    <pni-message-popup></pni-message-popup>
+
+    <div id="header">
+        <img ng-src="{{master.base}}style/images/prog{{master.steps.index+1}}.png" />
+        <h2>{{master.steps.titles[master.steps.index]}}</h2>
+    </div>
+    <div id="screenContainer" class="clearfix ng-cloak" ng-style="master.containerStyle" ng-cloak>
+
+        <pni-print-options ng-cloak></pni-print-options>
+
+        <pni-location-selection ng-cloak></pni-location-selection>
+
+        <pni-pickup-information ng-cloak></pni-pickup-information>
+        <pni-order-complete ng-cloak></pni-order-complete>
+        <pni-order-preview ng-cloak></pni-order-preview>
+
+        
+
+
+    </div>
+    <div id="branding">
+        <img ng-src="{{master.base}}style/images/footer-logo.png" />
+    </div>
+</div>

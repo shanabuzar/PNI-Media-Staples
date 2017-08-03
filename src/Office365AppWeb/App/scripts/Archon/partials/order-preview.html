@@ -1,0 +1,83 @@
+﻿<div class="screen">
+    <div id="contactInfo" class="padding">
+
+        <span></span>
+        <div>
+            <label class="item item-input">Print Option</label><br />
+            <label>Name:</label>
+            <span>{{preview.orderPreviewDetail.Name}}
+        </div>
+        <div>
+            <label>Package Name</label>
+            <span>{{preview.orderPreviewDetail.PackageName}}</span>
+        </div>
+        <div>
+            <label>Package Options</label><br>
+            <span>Print Color :</span>
+            <span>{{preview.orderPreviewDetail.PackageOptions.DocumentPrintColor}}</span>
+            <div>
+                <span>Paper Stock :</span>
+                <span>{{preview.orderPreviewDetail.PackageOptions.DocumentPaperStock}}</span>
+            </div>
+            <div>
+                <span>Binding :</span>
+                <span>{{preview.orderPreviewDetail.PackageOptions.DocumentSheetAttachement}}</span>
+            </div>
+            <div>
+                <span>Cover :</span>
+                <span>{{preview.orderPreviewDetail.PackageOptions.DocumentCover}}</span>
+            </div>
+            <div>
+                <span>Size :</span>
+                <span>{{preview.orderPreviewDetail.PackageOptions.DocumentPaperSize}}</span>
+            </div>
+            <label class="item item-input">Quantity Opton</label><br />
+            <div>
+                <span>No of Pages :</span>
+                <span>{{preview.orderPreviewDetail.PackageOptions.NumOfPages}}</span>
+            </div>
+            <div>
+                <span>Quantity :</span>
+                <span>{{preview.orderPreviewDetail.PackageOptions.Quantity}}</span>
+            </div>
+        </div>
+
+        <pni-pricing></pni-pricing>
+
+        <div>
+            <label class="item item-input">Pick up Information</label><br />
+            <label>Name:</label>
+            <span>{{preview.orderPreviewDetail.user.FirstName}} {{preview.orderPreviewDetail.user.LastName}}</span>
+        </div>
+        <div>
+            <label>EMail:</label>
+            <span>{{preview.orderPreviewDetail.user.EmailAddress}}</span>
+        </div>
+        <div>
+            <label>Phone:</label>
+            <span>{{preview.orderPreviewDetail.user.PhoneNumber}}</span>
+        </div>
+        <div>
+            <label class="item item-input">Pick up Location</label><br />
+          
+            <span>{{preview.orderPreviewDetail.PickUpLoaction.RetailerName}} {{preview.orderPreviewDetail.PickUpLoaction.StoreId}}</span>
+        </div>
+        <div>
+            <span>{{preview.orderPreviewDetail.PickUpLoaction.Address1}}</span>
+        </div>
+        <div>
+            <span>{{preview.orderPreviewDetail.PickUpLoaction.City}},{{preview.orderPreviewDetail.PickUpLoaction.PostalCode}}</span>
+        </div>
+        <div>
+            <span style="color:#0092db">{{preview.orderPreviewDetail.PickUpLoaction.Phone}}
+        </div>
+    </div>
+    <span class="col-md-3 price">
+        <strong>
+        </strong>
+    </span>
+    <div class="screen-footer">
+
+        <button ng-click='preview.back()' class="pull-right btn-action btn btn-staples">Back</button>
+    </div>
+</div>

@@ -1,0 +1,18 @@
+{
+  "private": true,
+  "name": "archon",
+  "version": "1.0.0",
+  "description": "",
+  "main": "App.js",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@types/jasmine": "^2.5.47",
+    "jasmine": "^2.6.0",
+    "karma": "^1.7.0",
+    "karma-cli": "^1.0.1"
+  },
+  "scripts": {},
+  "author": "pni",
+  "license": "ISC"
+}

@@ -1,0 +1,3 @@
+SELECT * from DNN.API.thirdpartyapplication where thirdpartyapplicationid = 504,,,,,,,,,,,,,,
+ThirdPartyApplicationId,Name,Key,ThirdPartyDeveloperId,CreatedDateTime,UpdatedDateTime,BaseUrl,Description,Enabled,IsProductionReady,IsSharedCart,IsPaymentReady,SecretKey,CanGetOrdersFromAllApps,WorkForAllSourceCartItems
+504,Print to Staples,819DCA3CB107456DA0BF38DBE4123E05,87,41:22.6,35:34.7,https://splus-365.pnimedia.com,"Print your documents directly from everyday applications, such as Office365, Google Docs, Dropbox, and more! New implementations are added regularly.",TRUE,TRUE,FALSE,FALSE,null,FALSE,FALSE
